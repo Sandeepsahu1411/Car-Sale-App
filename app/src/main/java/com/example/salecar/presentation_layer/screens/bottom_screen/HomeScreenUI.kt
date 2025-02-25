@@ -23,9 +23,12 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -40,11 +43,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -69,15 +74,15 @@ fun HomeScreenUI(navController: NavController) {
     var lastScrollIndex by remember { mutableIntStateOf(1) }
 
     LaunchedEffect(remember { derivedStateOf { listState.firstVisibleItemIndex } }) {
-        snapshotFlow { listState.firstVisibleItemIndex }
-            .collect { currentIndex ->
-                isScrollingUp = currentIndex < lastScrollIndex
-                lastScrollIndex = currentIndex
-            }
+        snapshotFlow { listState.firstVisibleItemIndex }.collect { currentIndex ->
+            isScrollingUp = currentIndex < lastScrollIndex
+            lastScrollIndex = currentIndex
+        }
     }
     val categoryBarHeight by animateDpAsState(
         targetValue = if (isScrollingUp) 40.dp else 0.dp,
-        animationSpec = tween(durationMillis = 500), label = ""
+        animationSpec = tween(durationMillis = 500),
+        label = ""
     )
     val dummyProducts = listOf(
         Product(R.drawable.car1, "Hyundai Creta", "₹5,00,000"),
@@ -90,7 +95,8 @@ fun HomeScreenUI(navController: NavController) {
         Product(R.drawable.car8, "Mahindra Thar Black", "₹5,50,000"),
         Product(R.drawable.car9, "Tata Safari", "₹7,90,000"),
         Product(R.drawable.car10, "Tata Ace", "₹9,30,000"),
-    )
+
+        )
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -110,12 +116,11 @@ fun HomeScreenUI(navController: NavController) {
                 categoryBarHeight = categoryBarHeight
             )
             LazyVerticalGrid(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .animateContentSize(),
+                modifier = Modifier.fillMaxSize(),
+//                    .animateContentSize()
                 state = listState,
                 columns = GridCells.Fixed(2),
-                userScrollEnabled = true
+//                userScrollEnabled = true
 
             ) {
                 items(dummyProducts) { product ->
@@ -185,11 +190,9 @@ fun CategoryBar(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(categories) { category ->
-                InputChip(
-                    selected = selectedCategory == category,
+                InputChip(selected = selectedCategory == category,
                     onClick = { onCategorySelected(category) },
-                    label = { Text(text = category) }
-                )
+                    label = { Text(text = category) })
             }
         }
     }
@@ -197,6 +200,7 @@ fun CategoryBar(
 
 @Composable
 fun ProductCard(product: Product, onClick: (Product) -> Unit) {
+    var isFavorite by rememberSaveable { mutableStateOf(false) }
     Card(
         modifier = Modifier
             .height(210.dp)
@@ -205,17 +209,49 @@ fun ProductCard(product: Product, onClick: (Product) -> Unit) {
             .clickable { onClick(product) },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Image(
-            painter = painterResource(id = product.imageRes),
-            contentDescription = "Product Image",
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .size(120.dp)
                 .clip(RoundedCornerShape(8.dp)),
-            contentScale = ContentScale.Crop
-        )
+            contentAlignment = Alignment.TopEnd
+
+
+        ) {
+            Image(
+                painter = painterResource(id = product.imageRes),
+                contentDescription = "Product Image",
+                modifier = Modifier
+                    .fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+            Box(
+                modifier = Modifier
+                    .padding(10.dp)
+                    .size(30.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .shadow(elevation = 10.dp)
+                    .clickable{
+                        isFavorite = !isFavorite
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = if (!isFavorite)Icons.Rounded.FavoriteBorder else Icons.Rounded.Favorite, contentDescription = null,
+                    modifier = Modifier
+                        .size(20.dp)
+                        ,
+                    tint = Color.Red
+
+                )
+
+            }
+        }
         Column(
-            modifier = Modifier.fillMaxSize().padding(5.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(5.dp),
             verticalArrangement = Arrangement.SpaceEvenly
         ) {
             Text(
@@ -236,7 +272,5 @@ fun ProductCard(product: Product, onClick: (Product) -> Unit) {
 
 @Parcelize
 data class Product(
-    val imageRes: Int,
-    val name: String,
-    val price: String
+    val imageRes: Int, val name: String, val price: String
 ) : Parcelable
