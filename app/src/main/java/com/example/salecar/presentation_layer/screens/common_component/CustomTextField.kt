@@ -1,5 +1,7 @@
 package com.example.salecar.presentation_layer.screens.common_component
 
+import android.R.attr.maxLines
+import android.R.attr.singleLine
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -46,7 +48,9 @@ fun CustomTextField(
     imeAction: ImeAction = ImeAction.Done,
     onImeAction: (() -> Unit)? = null,
     onlyNumbers: Boolean = false,
-    maxLines: Int = 1
+    maxLines: Int = 1,
+    prefix: @Composable (() -> Unit)? = null,
+    singleLine: Boolean = true
 
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -58,17 +62,15 @@ fun CustomTextField(
                 onValueChange(it)
             }
         },
-        singleLine = true,
+        singleLine = singleLine,
         placeholder = {
             Text(
                 text = placeholderText,
                 color = Color.Gray,
                 style = MaterialTheme.typography.bodyMedium
             )
-
         },
-
-
+        prefix = prefix,
         modifier = modifier
             .fillMaxWidth()
             .height(55.dp),

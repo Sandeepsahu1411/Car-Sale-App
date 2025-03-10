@@ -69,7 +69,8 @@ fun AppNavigation() {
             Routes.SignUpScreenRoute::class.qualifiedName,
             Routes.NotificationScreenRoute::class.qualifiedName,
             Routes.AddScreenRoute::class.qualifiedName,
-            Routes.SearchScreenRoute::class.qualifiedName
+            Routes.SearchScreenRoute::class.qualifiedName,
+            Routes.ProductDetailScreenRoute::class.qualifiedName
         )
     }
 

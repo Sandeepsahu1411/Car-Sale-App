@@ -199,8 +199,8 @@ fun CategoryBar(
 }
 
 @Composable
-fun ProductCard(product: Product, onClick: (Product) -> Unit) {
-    var isFavorite by rememberSaveable { mutableStateOf(false) }
+fun ProductCard(product: Product, onClick: (Product) -> Unit,isFavorite:Boolean = false) {
+    var isFavorite by rememberSaveable { mutableStateOf(isFavorite) }
     Card(
         modifier = Modifier
             .height(210.dp)

@@ -96,4 +96,7 @@ dependencies {
 //lottie Animation
     implementation("com.airbnb.android:lottie-compose:6.1.0")
 
+
+
+
 }
