@@ -72,13 +72,12 @@ import com.example.salecar.presentation_layer.screens.common_component.CustomTex
 @Composable
 fun AddScreenUI(navController: NavController) {
     Scaffold(topBar = {
-        CenterAlignedTopAppBar(
-            title = {
-                Text(
-                    text = "Sell Your Item",
-                    fontSize = 20.sp,
-                )
-            },
+        CenterAlignedTopAppBar(title = {
+            Text(
+                text = "Sell Your Item",
+                fontSize = 20.sp,
+            )
+        },
             navigationIcon = {
                 IconButton(onClick = { navController.popBackStack() }) {
                     Icon(
@@ -178,8 +177,7 @@ fun AddPhotosSec() {
                         .border(1.dp, Color.LightGray, RoundedCornerShape(10.dp))
                         .clickable {
                             launcher.launch("image/*")
-                        },
-                    contentAlignment = Alignment.Center
+                        }, contentAlignment = Alignment.Center
                 ) {
                     Image(
                         painter = painterResource(R.drawable.upload_img),
@@ -188,7 +186,7 @@ fun AddPhotosSec() {
                         colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary)
                     )
                 }
-            }else{
+            } else {
 
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(3),
@@ -211,8 +209,7 @@ fun AddPhotosSec() {
                                 contentScale = ContentScale.Crop
                             )
 
-                            Icon(
-                                imageVector = Icons.Default.Close,
+                            Icon(imageVector = Icons.Default.Close,
                                 contentDescription = "Remove Image",
                                 tint = Color.Red,
                                 modifier = Modifier
@@ -221,8 +218,7 @@ fun AddPhotosSec() {
                                     .padding(4.dp)
                                     .clickable {
                                         imageUris.removeAt(index)
-                                    }
-                            )
+                                    })
                         }
                     }
 
@@ -236,8 +232,7 @@ fun AddPhotosSec() {
                                     .border(1.dp, Color.LightGray, RoundedCornerShape(10.dp))
                                     .clickable {
                                         launcher.launch("image/*")
-                                    },
-                                contentAlignment = Alignment.Center
+                                    }, contentAlignment = Alignment.Center
                             ) {
                                 Image(
                                     painter = painterResource(R.drawable.upload_img),
@@ -261,12 +256,9 @@ fun AddPhotosSec() {
     }
 
     HorizontalDivider(
-        thickness = 1.dp,
-        color = Color.LightGray,
-        modifier = Modifier.padding(vertical = 10.dp)
+        thickness = 1.dp, color = Color.LightGray, modifier = Modifier.padding(vertical = 10.dp)
     )
 }
-
 
 @Composable
 fun VehicleSpecificationSec() {
