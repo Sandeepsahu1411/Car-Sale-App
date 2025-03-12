@@ -73,7 +73,6 @@ fun AppNavigation() {
             Routes.ProductDetailScreenRoute::class.qualifiedName
         )
     }
-
     Scaffold(containerColor = MaterialTheme.colorScheme.background,
         modifier = Modifier.fillMaxSize(),
         floatingActionButton = {
@@ -94,7 +93,7 @@ fun AppNavigation() {
         floatingActionButtonPosition = FabPosition.Center,
         bottomBar = {
             AnimatedVisibility(visible = bottomBarVisible,
-                enter = fadeIn(animationSpec = tween(durationMillis = 1000)) + slideInVertically { it },
+                enter = fadeIn(animationSpec = tween(durationMillis = 200)) + slideInVertically { it },
                 exit = fadeOut(animationSpec = tween(durationMillis = 1000)) + slideOutVertically { it }) {
                 CustomBottomBar(selectedItemIndex = selectedItemIndex, onItemSelected = { index ->
                     selectedItemIndex = index
@@ -110,7 +109,8 @@ fun AppNavigation() {
                     }
                 })
             }
-        }) { innerPadding ->
+        }
+    ) { innerPadding ->
 
         Box(
             modifier = Modifier

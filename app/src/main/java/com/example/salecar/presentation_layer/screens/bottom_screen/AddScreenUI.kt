@@ -1,5 +1,6 @@
 package com.example.salecar.presentation_layer.screens.bottom_screen
 
+import android.R.attr.bottom
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -13,33 +14,46 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.VerticalDivider
+import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -59,6 +73,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -72,12 +87,13 @@ import com.example.salecar.presentation_layer.screens.common_component.CustomTex
 @Composable
 fun AddScreenUI(navController: NavController) {
     Scaffold(topBar = {
-        CenterAlignedTopAppBar(title = {
-            Text(
-                text = "Sell Your Item",
-                fontSize = 20.sp,
-            )
-        },
+        CenterAlignedTopAppBar(
+            title = {
+                Text(
+                    text = "Sell Your Item",
+                    fontSize = 20.sp,
+                )
+            },
             navigationIcon = {
                 IconButton(onClick = { navController.popBackStack() }) {
                     Icon(
@@ -213,9 +229,11 @@ fun AddPhotosSec() {
                                 contentDescription = "Remove Image",
                                 tint = Color.Red,
                                 modifier = Modifier
-                                    .size(24.dp)
+                                    .size(30.dp)
                                     .align(Alignment.TopEnd)
                                     .padding(4.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White, CircleShape)
                                     .clickable {
                                         imageUris.removeAt(index)
                                     })
@@ -260,12 +278,31 @@ fun AddPhotosSec() {
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VehicleSpecificationSec() {
 
     var plateNo by remember { mutableStateOf("") }
-    var context = LocalContext.current
-    var features by remember { mutableStateOf("") }
+
+    val bottomSheetState = rememberModalBottomSheetState()
+    var showBottomSheet by remember { mutableStateOf(false) }
+    val selectedFeatures = remember { mutableStateListOf<String>() }
+    val featureList = listOf(
+        "AUX/USB Input Socket",
+        "Adjustable Steering Wheel",
+        "Air Conditioning",
+        "Airbag Knee Driver",
+        "Alarm System/Remote Anti-Theft",
+        "Alloy Wheels",
+        "Android Auto",
+        "Anti-lock Braking",
+        "Apple Car Play",
+        "Automatic Air Con/Climate Control",
+        "Automatic Headlights with Dusk Sensor",
+        "Automatic Stop/Start",
+        "Bluetooth Connectivity"
+    )
+
     Column(
         modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -298,43 +335,104 @@ fun VehicleSpecificationSec() {
         Text(
             text = "Vehicle standard features", fontSize = 18.sp, fontWeight = FontWeight.Bold
         )
-        Box(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            CustomTextField(value = features,
-                onValueChange = { features = it },
-                isEditable = false,
-                placeholderText = "Select Features",
-                modifier = Modifier,
-                trailingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.ArrowForwardIos,
-                        contentDescription = null,
-                        modifier = Modifier.size(25.dp)
-                    )
-                })
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(55.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .clickable {
-                        Toast
-                            .makeText(context, "Select Features", Toast.LENGTH_SHORT)
-                            .show()
-                    },
 
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(55.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .border(1.dp, Color.LightGray, RoundedCornerShape(10.dp))
+//                .background(Color.LightGray.copy(alpha = 0.3f))
+                .clickable {
+                    showBottomSheet = true
+                }
+                .padding(horizontal = 15.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Row {
+                Text(
+                    text = if (selectedFeatures.isEmpty()) "Select Features" else selectedFeatures.joinToString(
+                        ", "
+                    ),
+                    color = Color.Black,
+                    fontSize = 16.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
                 )
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    modifier = Modifier.size(30.dp)
+                )
+
+            }
         }
         Text(
-            text = "0 features added",
+            text = "${selectedFeatures.size} features added",
             style = MaterialTheme.typography.bodyLarge,
         )
     }
+
     HorizontalDivider(
         thickness = 1.dp, color = Color.LightGray, modifier = Modifier.padding(vertical = 10.dp)
     )
+    if (showBottomSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showBottomSheet = false },
+            sheetState = bottomSheetState,
 
+
+        ) {
+            Column(modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxHeight(1f)
+                .padding(horizontal = 16.dp)) {
+                Text(
+                    text = "Vehicle Features",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                LazyColumn (
+                    modifier = Modifier.weight(1f)
+                ){
+                    items(featureList) { feature ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
+                                .clickable {
+                                    if (selectedFeatures.contains(feature)) {
+                                        selectedFeatures.remove(feature)
+                                    } else {
+                                        selectedFeatures.add(feature)
+                                    }
+                                },
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = selectedFeatures.contains(feature),
+                                onCheckedChange = {
+                                    if (selectedFeatures.contains(feature)) {
+                                        selectedFeatures.remove(feature)
+                                    } else {
+                                        selectedFeatures.add(feature)
+                                    }
+                                }
+                            )
+                            Text(text = feature, fontSize = 16.sp)
+                        }
+                    }
+                }
+
+                CustomButton(
+                    onClick = { showBottomSheet = false},
+                    text = "Done"
+                )
+
+            }
+        }
+    }
 }
 
 @Composable
