@@ -2,6 +2,7 @@ package com.example.salecar.di
 
 import android.app.Application
 import android.content.Context
+import com.example.salecar.doman_layer.Repo
 import com.example.salecar.preference_db.UserPreferenceManager
 import dagger.Module
 import dagger.Provides
@@ -18,4 +19,12 @@ object DataModule {
     @Provides
     fun provideUserPreferenceManager(@ApplicationContext context: Context) =
         UserPreferenceManager(context)
+    @Singleton
+    @Provides
+    fun provideApplication(@ApplicationContext context: Context) = context as Application
+
+    @Singleton
+    @Provides
+    fun provideRepo() = Repo()
+
 }

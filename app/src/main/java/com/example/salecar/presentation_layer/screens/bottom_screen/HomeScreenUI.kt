@@ -1,11 +1,13 @@
 package com.example.salecar.presentation_layer.screens.bottom_screen
 
 import android.os.Parcelable
+import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -38,6 +41,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -52,24 +56,34 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.compose.SubcomposeAsyncImage
 import com.example.salecar.R
+import com.example.salecar.data_layer.response.home_res.Data
+import com.example.salecar.data_layer.response.home_res.HomeScreenResponse
 import com.example.salecar.presentation_layer.navigation.Routes
+import com.example.salecar.presentation_layer.screens.common_component.CustomLoadingBar
+import com.example.salecar.presentation_layer.view_model.AppViewModel
 import kotlinx.parcelize.Parcelize
 
 @Composable
-fun HomeScreenUI(navController: NavController) {
+fun HomeScreenUI(navController: NavController, viewModel: AppViewModel = hiltViewModel()) {
     val categories = listOf(
         "All", "Categories", "Car", "ForSale", "Property", "Tradespeople", "HomeAndGarden", "Jobs"
     )
+    val homeScreenState = viewModel.homeScreenState.collectAsState()
+
+
     var selectedCategory by remember { mutableStateOf("All") }
     val listState = rememberLazyGridState().apply { layoutInfo }
-
+    val context = LocalContext.current
     var isScrollingUp by remember { mutableStateOf(true) }
     var lastScrollIndex by remember { mutableIntStateOf(1) }
 
@@ -84,19 +98,7 @@ fun HomeScreenUI(navController: NavController) {
         animationSpec = tween(durationMillis = 500),
         label = ""
     )
-    val dummyProducts = listOf(
-        Product(R.drawable.car1, "Hyundai Creta", "₹5,00,000"),
-        Product(R.drawable.car2, "Swift Dzire", "₹7,20,000"),
-        Product(R.drawable.car3, "Grand i10", "₹3,50,000"),
-        Product(R.drawable.car4, "Alto K10 9001B", "₹6,75,000"),
-        Product(R.drawable.car5, "Mahindra Scorpio", "₹4,90,000"),
-        Product(R.drawable.car6, "Maruti Suzuki Baleno", "₹8,40,000"),
-        Product(R.drawable.car7, "Toyota Fortuner Black", "₹2,80,000"),
-        Product(R.drawable.car8, "Mahindra Thar Black", "₹5,50,000"),
-        Product(R.drawable.car9, "Tata Safari", "₹7,90,000"),
-        Product(R.drawable.car10, "Tata Ace", "₹9,30,000"),
 
-        )
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -115,27 +117,35 @@ fun HomeScreenUI(navController: NavController) {
                 onCategorySelected = { selectedCategory = it },
                 categoryBarHeight = categoryBarHeight
             )
-            LazyVerticalGrid(
-                modifier = Modifier.fillMaxSize(),
-//                    .animateContentSize()
-                state = listState,
-                columns = GridCells.Fixed(2),
-//                userScrollEnabled = true
+            when {
+                homeScreenState.value.loading -> {
+                    CustomLoadingBar()
+                }
 
-            ) {
-                items(dummyProducts) { product ->
-                    ProductCard(product, onClick = {
-                        navController.currentBackStackEntry?.savedStateHandle?.set("product", it)
-                        navController.navigate(Routes.ProductDetailScreenRoute)
-                    })
+                homeScreenState.value.error != null -> {
+                    Toast.makeText(context, homeScreenState.value.error, Toast.LENGTH_SHORT).show()
                 }
-                items(dummyProducts) { product ->
-                    ProductCard(product, onClick = {
-                        navController.currentBackStackEntry?.savedStateHandle?.set("product", it)
-                        navController.navigate(Routes.ProductDetailScreenRoute)
-                    })
+
+                else -> {
+
+                    LazyVerticalGrid(
+                        modifier = Modifier.fillMaxSize(),
+                        state = listState,
+                        columns = GridCells.Fixed(2),
+
+
+                    ) {
+                        items(homeScreenState.value.data) { product ->
+                            ProductCard(product, onClick = {
+                                navController.navigate(Routes.ProductDetailScreenRoute(id = product.id))
+                            })
+                        }
+
+                    }
                 }
+
             }
+
         }
 
     }
@@ -190,7 +200,8 @@ fun CategoryBar(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(categories) { category ->
-                InputChip(selected = selectedCategory == category,
+                InputChip(
+                    selected = selectedCategory == category,
                     onClick = { onCategorySelected(category) },
                     label = { Text(text = category) })
             }
@@ -199,7 +210,9 @@ fun CategoryBar(
 }
 
 @Composable
-fun ProductCard(product: Product, onClick: (Product) -> Unit,isFavorite:Boolean = false) {
+fun ProductCard(product: Data, onClick: (Data) -> Unit, isFavorite: Boolean = false) {
+    val baseUrl = "https://aidot.uk/sellcar/"
+    val imageUrl = if (product.images.isNotEmpty()) baseUrl + product.images.first() else ""
     var isFavorite by rememberSaveable { mutableStateOf(isFavorite) }
     Card(
         modifier = Modifier
@@ -218,9 +231,12 @@ fun ProductCard(product: Product, onClick: (Product) -> Unit,isFavorite:Boolean 
 
 
         ) {
-            Image(
-                painter = painterResource(id = product.imageRes),
-                contentDescription = "Product Image",
+            SubcomposeAsyncImage(
+                model = if (imageUrl.isNotEmpty()) imageUrl else R.drawable.car1,
+                contentDescription = null,
+                loading = {
+                    CustomLoadingBar()
+                },
                 modifier = Modifier
                     .fillMaxSize(),
                 contentScale = ContentScale.Crop
@@ -232,16 +248,16 @@ fun ProductCard(product: Product, onClick: (Product) -> Unit,isFavorite:Boolean 
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primaryContainer)
                     .shadow(elevation = 10.dp)
-                    .clickable{
+                    .clickable {
                         isFavorite = !isFavorite
                     },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = if (!isFavorite)Icons.Rounded.FavoriteBorder else Icons.Rounded.Favorite, contentDescription = null,
+                    imageVector = if (!isFavorite) Icons.Rounded.FavoriteBorder else Icons.Rounded.Favorite,
+                    contentDescription = null,
                     modifier = Modifier
-                        .size(20.dp)
-                        ,
+                        .size(20.dp),
                     tint = Color.Red
 
                 )
@@ -255,14 +271,14 @@ fun ProductCard(product: Product, onClick: (Product) -> Unit,isFavorite:Boolean 
             verticalArrangement = Arrangement.SpaceEvenly
         ) {
             Text(
-                text = product.name,
+                text = product.title,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
                 lineHeight = 20.sp
             )
 
             Text(
-                text = product.price,
+                text = " $${product.price}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.Gray
             )
@@ -270,7 +286,3 @@ fun ProductCard(product: Product, onClick: (Product) -> Unit,isFavorite:Boolean 
     }
 }
 
-@Parcelize
-data class Product(
-    val imageRes: Int, val name: String, val price: String
-) : Parcelable

@@ -1,5 +1,6 @@
 package com.example.salecar.presentation_layer.screens.start_screen
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -38,22 +41,55 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.salecar.R
 import com.example.salecar.presentation_layer.navigation.Routes
 import com.example.salecar.presentation_layer.navigation.SubNavigation
 import com.example.salecar.presentation_layer.screens.common_component.CustomButton
+import com.example.salecar.presentation_layer.screens.common_component.CustomLoadingBar
 import com.example.salecar.presentation_layer.screens.common_component.CustomTextField
+import com.example.salecar.presentation_layer.view_model.AppViewModel
 
 @Composable
-fun LoginScreenUI(navController: NavController) {
+fun LoginScreenUI(navController: NavController, viewModel: AppViewModel = hiltViewModel()) {
+    val loginState = viewModel.loginState.collectAsState()
+
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    val context = LocalContext.current
+
+    when {
+        loginState.value.loading -> {
+            CustomLoadingBar()
+        }
+
+        loginState.value.error != null -> {
+            Toast.makeText(context, loginState.value.error, Toast.LENGTH_SHORT).show()
+            loginState.value.error = null
+        }
+
+        loginState.value.data != null -> {
+
+            if (loginState.value.data?.body()?.status == true) {
+                navController.navigate(SubNavigation.MainHomeScreen) {
+                    popUpTo(SubNavigation.StartupScreen) { inclusive = true }
+                }
+            }
+
+            Toast.makeText(
+                context, loginState.value.data?.body()?.message,Toast.LENGTH_SHORT
+            ).show()
+            loginState.value.data = null
+
+        }
+    }
+
+
     Box {
         Column(
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Image(
@@ -82,7 +118,8 @@ fun LoginScreenUI(navController: NavController) {
 
                 Column {
                     Text(
-                        text = "Email Address", style = MaterialTheme.typography.bodyLarge,
+                        text = "Email Address",
+                        style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.padding(horizontal = 5.dp)
                     )
                     CustomTextField(
@@ -102,7 +139,8 @@ fun LoginScreenUI(navController: NavController) {
                 }
                 Column {
                     Text(
-                        text = "Password", style = MaterialTheme.typography.bodyLarge,
+                        text = "Password",
+                        style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.padding(horizontal = 5.dp)
                     )
                     CustomTextField(
@@ -121,25 +159,31 @@ fun LoginScreenUI(navController: NavController) {
                         )
                 }
                 CustomButton(
-                    text = "Continue",
-                    onClick = {
-                        navController.navigate(Routes.HomeScreenRoute){
-                            popUpTo(SubNavigation.StartupScreen){
-                                inclusive = true
-                            }
+                    text = "Continue", onClick = {
+                        if (email.isEmpty() || password.isEmpty()) {
+                            Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT)
+                                .show()
+                            return@CustomButton
                         }
-                    },
-                    modifier = Modifier.fillMaxWidth()
+                        val emailPattern = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[a-z]{2,3}\$")
+                        if (!email.matches(emailPattern)) {
+                            Toast.makeText(context, "invalid email", Toast.LENGTH_SHORT).show()
+                            return@CustomButton
+                        }
+                        viewModel.login(email, password)
+                    }, modifier = Modifier.fillMaxWidth()
                 )
-                Row(modifier = Modifier.fillMaxWidth(),
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
                 ) {
                     Text(
                         text = "Don't have an account? ",
                         fontSize = 18.sp,
-                        color= MaterialTheme.colorScheme.onSecondary
+                        color = MaterialTheme.colorScheme.onSecondary
                     )
-                    Text(text = "Sign Up",
+                    Text(
+                        text = "Sign Up",
                         color = MaterialTheme.colorScheme.primary,
                         fontSize = 18.sp,
                         modifier = Modifier.clickable {
@@ -161,8 +205,7 @@ fun LoginScreenUI(navController: NavController) {
                     .background(Color.White)
                     .clickable {
                         navController.navigateUp()
-                    },
-                contentAlignment = Alignment.Center
+                    }, contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Rounded.ArrowBackIosNew,

@@ -10,7 +10,8 @@ sealed class SubNavigation {
     @Serializable
     object StartupScreen : SubNavigation()
 }
-sealed class Routes{
+
+sealed class Routes {
 
     @Serializable
     object SplashScreenRoute : Routes()
@@ -46,7 +47,9 @@ sealed class Routes{
     object SearchScreenRoute : Routes()
 
     @Serializable
-    object ProductDetailScreenRoute : Routes()
+    data class ProductDetailScreenRoute(
+        val id : String
+    ) : Routes()
 
 
 }

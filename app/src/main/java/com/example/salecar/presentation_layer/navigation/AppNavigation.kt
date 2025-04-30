@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -39,7 +40,6 @@ import com.example.salecar.preference_db.UserPreferenceManager
 import com.example.salecar.presentation_layer.screens.bottom_screen.AddScreenUI
 import com.example.salecar.presentation_layer.screens.bottom_screen.HomeScreenUI
 import com.example.salecar.presentation_layer.screens.bottom_screen.MassageScreenUI
-import com.example.salecar.presentation_layer.screens.bottom_screen.Product
 import com.example.salecar.presentation_layer.screens.bottom_screen.ProfileScreenUI
 import com.example.salecar.presentation_layer.screens.bottom_screen.WishListScreenUI
 import com.example.salecar.presentation_layer.screens.common_component.CustomBottomBar
@@ -50,12 +50,14 @@ import com.example.salecar.presentation_layer.screens.start_screen.LoginScreenUI
 import com.example.salecar.presentation_layer.screens.start_screen.SignUpScreenUI
 import com.example.salecar.presentation_layer.screens.start_screen.SplashScreenUI
 import com.example.salecar.presentation_layer.screens.start_screen.StartScreenUI
+import com.example.salecar.presentation_layer.view_model.AppViewModel
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
 
     val userPreferenceManager = UserPreferenceManager(LocalContext.current)
+    val viewModel : AppViewModel = hiltViewModel()
     var selectedItemIndex by remember { mutableIntStateOf(0) }
 
     var bottomBarVisible by remember { mutableStateOf(false) }
@@ -119,7 +121,7 @@ fun AppNavigation() {
             contentAlignment = Alignment.BottomCenter
         ) {
             NavHost(
-                navController = navController, startDestination = SubNavigation.MainHomeScreen,
+                navController = navController, startDestination = SubNavigation.StartupScreen,
             ) {
                 navigation<SubNavigation.StartupScreen>(startDestination = Routes.SplashScreenRoute) {
                     composable<Routes.SplashScreenRoute> {
@@ -147,7 +149,7 @@ fun AppNavigation() {
                         WishListScreenUI(navController)
                     }
                     composable<Routes.ProfileScreenRoute> {
-                        ProfileScreenUI(navController)
+                        ProfileScreenUI(navController,userPreferenceManager)
                     }
                     composable<Routes.NotificationScreenRoute> {
                         NotificationScreenUI(navController)
@@ -159,7 +161,8 @@ fun AppNavigation() {
                         SearchScreenUI(navController)
                     }
                     composable<Routes.ProductDetailScreenRoute> {
-                        ProductDetailScreenUI(navController)
+                        val id = it.arguments?.getString("id")
+                        ProductDetailScreenUI(navController,id,viewModel)
                     }
 
                 }

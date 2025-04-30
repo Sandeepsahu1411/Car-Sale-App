@@ -165,12 +165,12 @@ fun AddPhotosSec() {
             Icon(
                 painter = painterResource(id = R.drawable.idea),
                 contentDescription = null,
-                modifier = Modifier.size(30.dp)
+                modifier = Modifier.size(25.dp)
             )
             Text(
                 text = "Ads with good pictures get more views and replies.",
-                fontSize = 16.sp,
-                lineHeight = 20.sp
+                fontSize = 14.sp,
+                lineHeight = 16.sp
             )
         }
 
@@ -370,7 +370,7 @@ fun VehicleSpecificationSec() {
         }
         Text(
             text = "${selectedFeatures.size} features added",
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.bodySmall,
         )
     }
 
@@ -383,19 +383,21 @@ fun VehicleSpecificationSec() {
             sheetState = bottomSheetState,
 
 
-        ) {
-            Column(modifier = Modifier
-                .fillMaxHeight()
-                .fillMaxHeight(1f)
-                .padding(horizontal = 16.dp)) {
+            ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxHeight(1f)
+                    .padding(horizontal = 16.dp)
+            ) {
                 Text(
                     text = "Vehicle Features",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
-                LazyColumn (
+                LazyColumn(
                     modifier = Modifier.weight(1f)
-                ){
+                ) {
                     items(featureList) { feature ->
                         Row(
                             modifier = Modifier
@@ -426,7 +428,7 @@ fun VehicleSpecificationSec() {
                 }
 
                 CustomButton(
-                    onClick = { showBottomSheet = false},
+                    onClick = { showBottomSheet = false },
                     text = "Done"
                 )
 
@@ -493,7 +495,7 @@ fun AddCarDetails() {
 
                 Text(
                     text = if (wordCount < 12) "12 Words minimum" else "",
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = if (isValid) Color.Gray else Color.Red,
                     modifier = Modifier.weight(1f)
                 )
@@ -541,6 +543,8 @@ fun AddCarDetails() {
 fun ContactDetailSec() {
     var messageChecked by remember { mutableStateOf(true) }
     var phoneChecked by remember { mutableStateOf(false) }
+    var isEdit by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier.padding(horizontal = 10.dp),
         verticalArrangement = Arrangement.spacedBy(5.dp)
@@ -565,65 +569,81 @@ fun ContactDetailSec() {
             )
 
             Spacer(Modifier.weight(1f))
-            IconButton(onClick = { /*TODO*/ }) {
-                Text(
-                    text = "Edit",
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
+
+            Text(
+                text = if (isEdit) "Save Detail" else "Edit",
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clickable {
+                    isEdit = !isEdit
+                }
+            )
+
         }
-        Row(
-            verticalAlignment = Alignment.Top,
-        ) {
-            Checkbox(
-                checked = messageChecked,
-                onCheckedChange = { messageChecked = it },
-
-                )
-            Column {
-                Text(
-                    text = "Messages on platform", fontSize = 16.sp, fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = buildAnnotatedString {
-                        append("Get notified via")
-                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                            append(" User@gmail.com")
-
-                        }
-                    }, style = MaterialTheme.typography.bodyLarge, color = Color.Gray
-
-
-                )
-            }
-        }
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-
+        if (!isEdit) {
+            Row(
+                verticalAlignment = Alignment.Top,
             ) {
-            Checkbox(
-                checked = phoneChecked,
-                onCheckedChange = { phoneChecked = it },
+                Checkbox(
+                    checked = messageChecked,
+                    onCheckedChange = { messageChecked = it },
 
+                    )
+                Column {
+                    Text(
+                        text = "Messages on platform",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = buildAnnotatedString {
+                            append("Get notified via")
+                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                append(" User@gmail.com")
+
+                            }
+                        }, style = MaterialTheme.typography.bodyLarge, color = Color.Gray
+
+
+                    )
+                }
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Checkbox(
+                    checked = phoneChecked,
+                    onCheckedChange = { phoneChecked = it },
+
+                    )
+                Text(
+                    text = "Phone:", fontSize = 16.sp, fontWeight = FontWeight.Bold
                 )
-            Text(
-                text = "Phone:", fontSize = 16.sp, fontWeight = FontWeight.Bold
-            )
-            Spacer(Modifier.size(10.dp))
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = null,
-                modifier = Modifier.size(25.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Text(
-                text = "Add phone number", fontSize = 16.sp, color = Color.Gray
-            )
+                Spacer(Modifier.size(10.dp))
+                IconButton(onClick = {
+                    isEdit = true
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(25.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+                Text(
+                    text = "Add phone number", fontSize = 16.sp, color = Color.Gray
+                )
 
 
+            }
+        } else {
+            Text(
+                text = "Messages on platform",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
     HorizontalDivider(

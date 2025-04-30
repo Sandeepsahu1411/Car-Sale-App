@@ -1,6 +1,10 @@
 package com.example.salecar.presentation_layer.screens.other_screen
 
-import androidx.compose.foundation.Image
+import android.R.attr.fontWeight
+import android.R.attr.text
+import android.util.Log
+import android.widget.Toast
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -8,17 +12,20 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PageSize
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -39,6 +46,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,87 +58,118 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import coil.compose.SubcomposeAsyncImage
 import com.example.salecar.R
+import com.example.salecar.data_layer.response.car_detail_res.CarData
+import com.example.salecar.data_layer.response.home_res.Data
 import com.example.salecar.presentation_layer.navigation.Routes
-import com.example.salecar.presentation_layer.screens.bottom_screen.Product
 import com.example.salecar.presentation_layer.screens.bottom_screen.ProductCard
 import com.example.salecar.presentation_layer.screens.common_component.CustomButton
+import com.example.salecar.presentation_layer.screens.common_component.CustomLoadingBar
 import com.example.salecar.presentation_layer.screens.common_component.CustomTextField
+import com.example.salecar.presentation_layer.view_model.AppViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProductDetailScreenUI(navController: NavController) {
-    val product = navController.previousBackStackEntry?.savedStateHandle?.get<Product>("product")
+fun ProductDetailScreenUI(navController: NavController, id: String?, viewModel: AppViewModel) {
+
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-
     var message by remember { mutableStateOf("") }
+    val carDetailState = viewModel.carDetailState.collectAsState()
+    val data = carDetailState.value.data?.body()?.data
 
-    product?.let { product ->
-        Scaffold(
+    val homeScreenState = viewModel.homeScreenState.collectAsState()
 
-        ) { innerPadding ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .nestedScroll(scrollBehavior.nestedScrollConnection)
-            ) {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(top = innerPadding.calculateTopPadding())
-                        .padding(bottom = 70.dp),
-                ) {
-                    item {
-                        ProductDetail(product, navController)
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.carDetail(id.toString())
+        Log.d("TAG", "ProductDetailScreenUI: $id")
+    }
+
+
+    Scaffold(
+
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .nestedScroll(scrollBehavior.nestedScrollConnection)
+        ) {
+            when {
+                carDetailState.value.loading -> {
+                    CustomLoadingBar()
+                }
+
+                carDetailState.value.error != null -> {
+                    Toast.makeText(context, carDetailState.value.error, Toast.LENGTH_SHORT).show()
+                }
+
+
+                else -> {
+                    val similarProduct = homeScreenState.value.data
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(top = innerPadding.calculateTopPadding())
+                            .padding(bottom = 70.dp),
+                    ) {
+                        item {
+                            ProductDetail(data, navController, similarProduct)
+                        }
+
                     }
 
                 }
-                AnimatedTopBar(navController, scrollBehavior)
-                Box(
+            }
+            AnimatedTopBar(navController, scrollBehavior)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+//                        .background(MaterialTheme.colorScheme.primaryContainer)
+                    .align(Alignment.BottomCenter)
+                    .padding(10.dp),
+                contentAlignment = Alignment.BottomCenter
+
+            ) {
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-//                        .background(MaterialTheme.colorScheme.primaryContainer)
-                        .align(Alignment.BottomCenter)
-                        .padding(10.dp),
-                    contentAlignment = Alignment.BottomCenter
+                        .padding(horizontal = 5.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
 
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 5.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    CustomTextField(
+                        value = message,
+                        onValueChange = { message = it },
+                        modifier = Modifier.weight(0.7f),
+                        placeholderText = "Is this still available? "
+                    )
+                    CustomButton(
+                        onClick = {}, text = "Send", modifier = Modifier.weight(0.3f)
+                    )
 
-                    ) {
-                        CustomTextField(
-                            value = message,
-                            onValueChange = { message = it },
-                            modifier = Modifier.weight(0.7f),
-                            placeholderText = "Is this still available? "
-                        )
-                        CustomButton(
-                            onClick = {}, text = "Send", modifier = Modifier.weight(0.3f)
-                        )
-
-                    }
                 }
             }
         }
     }
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnimatedTopBar(navController: NavController, scrollBehavior: TopAppBarScrollBehavior) {
 
-    TopAppBar(colors = TopAppBarDefaults.topAppBarColors(
+    TopAppBar(
+        colors = TopAppBarDefaults.topAppBarColors(
         containerColor = Color.Transparent,
         scrolledContainerColor = MaterialTheme.colorScheme.primaryContainer
     ), title = { }, navigationIcon = {
@@ -187,32 +227,15 @@ fun AnimatedTopBar(navController: NavController, scrollBehavior: TopAppBarScroll
 }
 
 @Composable
-fun ProductDetail(it: Product, navController: NavController) {
+fun ProductDetail(data: CarData?, navController: NavController, product: List<Data>) {
 
+    val baseUrl = "https://aidot.uk/sellcar/"
     var isFavorite by remember { mutableStateOf(false) }
 
-    val dummyProducts = listOf(
-        Product(R.drawable.car1, "Hyundai Creta", "₹5,00,000"),
-        Product(R.drawable.car2, "Swift Dzire", "₹7,20,000"),
-        Product(R.drawable.car3, "Grand i10", "₹3,50,000"),
-        Product(R.drawable.car4, "Alto K10 9001B", "₹6,75,000"),
-        Product(R.drawable.car5, "Mahindra Scorpio", "₹4,90,000"),
-        Product(R.drawable.car6, "Maruti Suzuki Baleno", "₹8,40,000"),
-        Product(R.drawable.car7, "Toyota Fortuner Black", "₹2,80,000"),
-        Product(R.drawable.car8, "Mahindra Thar Black", "₹5,50,000"),
-        Product(R.drawable.car9, "Tata Safari", "₹7,90,000"),
-        Product(R.drawable.car10, "Tata Ace", "₹9,30,000"),
-
-        )
-
-    Image(
-        painter = painterResource(id = it.imageRes),
-        contentDescription = "Product Image",
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(280.dp),
-        contentScale = ContentScale.Crop
+    ProductImageSlider(
+        images = data?.images ?: emptyList(), baseUrl = baseUrl
     )
+
     Column(
         modifier = Modifier.padding(horizontal = 10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -224,7 +247,7 @@ fun ProductDetail(it: Product, navController: NavController) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = it.name,
+                text = data?.title ?: "",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 lineHeight = 25.sp,
@@ -247,7 +270,7 @@ fun ProductDetail(it: Product, navController: NavController) {
         }
 
         Text(
-            text = it.price,
+            text = "$${data?.price ?: ""} ",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSecondary,
@@ -276,8 +299,7 @@ fun ProductDetail(it: Product, navController: NavController) {
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\n \n" + " ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-            style = MaterialTheme.typography.bodyLarge
+            text = data?.description ?: "", style = MaterialTheme.typography.bodyLarge
         )
         Text(
             text = "Posted 2 Week ago",
@@ -359,19 +381,66 @@ fun ProductDetail(it: Product, navController: NavController) {
     }
     Box(
         modifier = Modifier
-            .height(650.dp)
+            .height(630.dp)
             .fillMaxWidth()
     ) {
         LazyVerticalGrid(
             modifier = Modifier.fillMaxSize(),
             columns = GridCells.Fixed(2),
         ) {
-            items(dummyProducts.take(6)) { product ->
+
+            items(product.take(6)) { product ->
                 ProductCard(product, onClick = {
-                    navController.currentBackStackEntry?.savedStateHandle?.set("product", it)
-                    navController.navigate(Routes.ProductDetailScreenRoute)
+                    navController.navigate(Routes.ProductDetailScreenRoute(id = product.id))
                 })
             }
         }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun ProductImageSlider(images: List<String>, baseUrl: String) {
+
+    val pagerState = rememberPagerState(initialPage = 0, pageCount = { images.size })
+    Column {
+        HorizontalPager(
+            state = pagerState,
+            pageSize = PageSize.Fill,
+            pageSpacing = 0.dp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(280.dp)
+        ) { pageIndex ->
+            SubcomposeAsyncImage(
+                model = baseUrl + images[pageIndex],
+                contentDescription = null,
+                loading = { CustomLoadingBar() },
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            repeat(images.size) { index ->
+                val isSelected = pagerState.currentPage == index
+                Box(
+                    modifier = Modifier
+
+                        .size(if (isSelected) 20.dp else 14.dp)
+                        .padding(4.dp)
+                        .background(
+                            if (isSelected) Color(0xFFD77A7A) else Color(0xFFF68B8B).copy(),
+                            shape = CircleShape
+                        )
+                )
+            }
+        }
+
     }
 }

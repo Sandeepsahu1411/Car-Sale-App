@@ -26,17 +26,7 @@ import com.example.salecar.presentation_layer.navigation.Routes
 import kotlinx.coroutines.delay
 import com.example.salecar.R
 
-//@Composable
-//fun SplashScreenUI(navController: NavController) {
-//
-//    Column(
-//        modifier = Modifier.fillMaxSize(),
-//        horizontalAlignment = Alignment.CenterHorizontally,
-//        verticalArrangement = Arrangement.Center
-//    ) {
-//        Text(text = "Splash Screen", style = MaterialTheme.typography.titleLarge)
-//    }
-//}
+
 @Composable
 fun SplashScreenUI(navController: NavHostController, userPreferenceManager: UserPreferenceManager) {
 
