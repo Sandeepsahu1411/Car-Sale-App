@@ -413,7 +413,7 @@ fun ProductImageSlider(images: List<String>, baseUrl: String) {
                 .height(280.dp)
         ) { pageIndex ->
             SubcomposeAsyncImage(
-                model = baseUrl + images[pageIndex],
+                model = if (images.isNotEmpty()) baseUrl + images[pageIndex] else R.drawable.no_image_avl,
                 contentDescription = null,
                 loading = { CustomLoadingBar() },
                 modifier = Modifier.fillMaxSize(),

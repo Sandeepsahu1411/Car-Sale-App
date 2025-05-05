@@ -77,15 +77,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.salecar.R
 import com.example.salecar.presentation_layer.screens.common_component.CustomButton
 import com.example.salecar.presentation_layer.screens.common_component.CustomTextField
+import com.example.salecar.presentation_layer.view_model.AppViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddScreenUI(navController: NavController) {
+fun AddScreenUI(navController: NavController,viewModel: AppViewModel = hiltViewModel()) {
     Scaffold(topBar = {
         CenterAlignedTopAppBar(
             title = {

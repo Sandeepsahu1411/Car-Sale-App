@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.salecar.ResultState
 import com.example.salecar.data_layer.response.car_detail_res.CarDetailResponse
+import com.example.salecar.data_layer.response.car_post_res.CarPostRequest
+import com.example.salecar.data_layer.response.car_post_res.CarPostResponse
 import com.example.salecar.data_layer.response.home_res.Data
 import com.example.salecar.data_layer.response.home_res.HomeScreenResponse
 
@@ -35,6 +37,9 @@ class AppViewModel @Inject constructor(
 
     private val _carDetailState = MutableStateFlow(CarDetailState())
     val carDetailState = _carDetailState.asStateFlow()
+
+    private val _carPostState = MutableStateFlow(CarPostState())
+    val carPostSate = _carPostState.asStateFlow()
 
     fun login(email: String, password: String) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -129,15 +134,38 @@ class AppViewModel @Inject constructor(
                     is ResultState.Loading -> {
                         _carDetailState.value = CarDetailState(loading = true)
                     }
+
                     is ResultState.Success -> {
                         _carDetailState.value = CarDetailState(data = it.data)
                     }
+
                     is ResultState.Error -> {
                         _carDetailState.value = CarDetailState(error = it.message)
                     }
                 }
             }
         }
+    }
+
+    fun carPost(request: CarPostRequest) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repo.carPostRepo(request).collect {
+                when (it) {
+                    is ResultState.Loading -> {
+                        _carPostState.value = CarPostState(loading = true)
+                    }
+
+                    is ResultState.Success -> {
+                        _carPostState.value = CarPostState(data = it.data)
+                    }
+
+                    is ResultState.Error -> {
+                        _carPostState.value = CarPostState(error = it.message)
+                    }
+                }
+            }
+        }
+
     }
 
 }
@@ -165,3 +193,10 @@ data class CarDetailState(
     var error: String? = null,
     var data: Response<CarDetailResponse>? = null,
 )
+
+data class CarPostState(
+    val loading: Boolean = false,
+    var error: String? = null,
+    var data: Response<CarPostResponse>? = null,
+
+    )

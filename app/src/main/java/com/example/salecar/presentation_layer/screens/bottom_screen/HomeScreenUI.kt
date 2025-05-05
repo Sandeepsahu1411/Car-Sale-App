@@ -134,7 +134,7 @@ fun HomeScreenUI(navController: NavController, viewModel: AppViewModel = hiltVie
                         columns = GridCells.Fixed(2),
 
 
-                    ) {
+                        ) {
                         items(homeScreenState.value.data) { product ->
                             ProductCard(product, onClick = {
                                 navController.navigate(Routes.ProductDetailScreenRoute(id = product.id))
@@ -212,7 +212,9 @@ fun CategoryBar(
 @Composable
 fun ProductCard(product: Data, onClick: (Data) -> Unit, isFavorite: Boolean = false) {
     val baseUrl = "https://aidot.uk/sellcar/"
-    val imageUrl = if (product.images.isNotEmpty()) baseUrl + product.images.first() else ""
+    val imageUrl =
+        if (!product.images.isNullOrEmpty()) baseUrl + product.images.first() else R.drawable.no_image_avl
+
     var isFavorite by rememberSaveable { mutableStateOf(isFavorite) }
     Card(
         modifier = Modifier
@@ -232,7 +234,7 @@ fun ProductCard(product: Data, onClick: (Data) -> Unit, isFavorite: Boolean = fa
 
         ) {
             SubcomposeAsyncImage(
-                model = if (imageUrl.isNotEmpty()) imageUrl else R.drawable.car1,
+                model = imageUrl,
                 contentDescription = null,
                 loading = {
                     CustomLoadingBar()
