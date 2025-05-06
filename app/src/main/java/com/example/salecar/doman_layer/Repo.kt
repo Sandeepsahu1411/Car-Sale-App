@@ -1,5 +1,6 @@
 package com.example.salecar.doman_layer
 
+import android.content.Context
 import android.util.Log
 import android.util.Log.e
 import com.example.salecar.ResultState
@@ -7,7 +8,7 @@ import com.example.salecar.data_layer.api.ApiProvider
 import com.example.salecar.data_layer.response.car_detail_res.CarDetailResponse
 import com.example.salecar.data_layer.response.car_post_res.CarPostRequest
 import com.example.salecar.data_layer.response.car_post_res.CarPostResponse
-import com.example.salecar.data_layer.response.car_post_res.toFieldMap
+import com.example.salecar.data_layer.response.car_post_res.toMultipart
 import com.example.salecar.data_layer.response.home_res.HomeScreenResponse
 import com.example.salecar.data_layer.response.login_res.LoginResponse
 import com.example.salecar.data_layer.response.signup_res.SignUpResponse
@@ -149,11 +150,12 @@ class Repo {
 //
 //        }
 //    }
-    suspend fun carPostRepo(request: CarPostRequest): Flow<ResultState<Response<CarPostResponse>>> =
+    suspend fun carPostRepo(request: CarPostRequest, context: Context): Flow<ResultState<Response<CarPostResponse>>> =
         flow {
             emit(ResultState.Loading)
             try {
-                val response = ApiProvider.api().carPost(request.toFieldMap())
+                val (data, imageParts) = request.toMultipart( context = context)
+                val response = ApiProvider.api().carPost(data, imageParts)
                 emit(ResultState.Success(response))
             } catch (e: Exception) {
                 emit(ResultState.Error(e.message.toString()))

@@ -46,7 +46,7 @@ fun CustomBottomSheet(
             onDismissRequest = onDismiss,
             sheetState = sheetState,
             containerColor = MaterialTheme.colorScheme.background,
-            windowInsets = WindowInsets(0),
+//            windowInsets = WindowInsets(0),
             dragHandle = {
                 Box(
                     modifier = Modifier

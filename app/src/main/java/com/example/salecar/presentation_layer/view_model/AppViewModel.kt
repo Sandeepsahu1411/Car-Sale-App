@@ -1,5 +1,6 @@
 package com.example.salecar.presentation_layer.view_model
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -39,7 +40,7 @@ class AppViewModel @Inject constructor(
     val carDetailState = _carDetailState.asStateFlow()
 
     private val _carPostState = MutableStateFlow(CarPostState())
-    val carPostSate = _carPostState.asStateFlow()
+    val carPostState = _carPostState.asStateFlow()
 
     fun login(email: String, password: String) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -147,9 +148,10 @@ class AppViewModel @Inject constructor(
         }
     }
 
-    fun carPost(request: CarPostRequest) {
+
+    fun carPost(request: CarPostRequest, context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
-            repo.carPostRepo(request).collect {
+            repo.carPostRepo(request , context).collect {
                 when (it) {
                     is ResultState.Loading -> {
                         _carPostState.value = CarPostState(loading = true)

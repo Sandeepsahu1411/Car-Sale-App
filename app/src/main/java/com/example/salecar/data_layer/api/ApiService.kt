@@ -5,13 +5,18 @@ import com.example.salecar.data_layer.response.car_post_res.CarPostResponse
 import com.example.salecar.data_layer.response.home_res.HomeScreenResponse
 import com.example.salecar.data_layer.response.login_res.LoginResponse
 import com.example.salecar.data_layer.response.signup_res.SignUpResponse
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.Field
 import retrofit2.http.FieldMap
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.Part
+import retrofit2.http.PartMap
 import retrofit2.http.Query
 
 interface ApiService {
@@ -75,11 +80,18 @@ interface ApiService {
 //        @Field("brochure_engine_size") brochure_engine_size: String,
 //
 //        ): Response<CarPostResponse>
+//
+//    @FormUrlEncoded
+//    @POST("submitCar.php")
+//    suspend fun carPost(
+//        @FieldMap fields: Map<String, @JvmSuppressWildcards Any>
+//    ): Response<CarPostResponse>
 
-    @FormUrlEncoded
+    @Multipart
     @POST("submitCar.php")
     suspend fun carPost(
-        @FieldMap fields: Map<String, @JvmSuppressWildcards Any>
+        @PartMap data: Map<String, @JvmSuppressWildcards RequestBody>,
+        @Part images: List<MultipartBody.Part>
     ): Response<CarPostResponse>
 
 }

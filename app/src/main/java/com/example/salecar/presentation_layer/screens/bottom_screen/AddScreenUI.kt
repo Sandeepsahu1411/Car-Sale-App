@@ -1,6 +1,7 @@
 package com.example.salecar.presentation_layer.screens.bottom_screen
 
-import android.R.attr.bottom
+import android.content.Context
+import android.location.Geocoder
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -14,15 +15,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -31,34 +29,34 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.ModalBottomSheetDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.VerticalDivider
-import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -73,21 +71,75 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.salecar.R
+import com.example.salecar.data_layer.response.car_post_res.CarPostRequest
+import com.example.salecar.presentation_layer.navigation.Routes
 import com.example.salecar.presentation_layer.screens.common_component.CustomButton
+import com.example.salecar.presentation_layer.screens.common_component.CustomLoadingBar
 import com.example.salecar.presentation_layer.screens.common_component.CustomTextField
 import com.example.salecar.presentation_layer.view_model.AppViewModel
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddScreenUI(navController: NavController,viewModel: AppViewModel = hiltViewModel()) {
+fun AddScreenUI(navController: NavController, viewModel: AppViewModel = hiltViewModel()) {
+    val postState = viewModel.carPostState.collectAsState()
+    val showDialog = remember { mutableStateOf(true) }
+    val context = LocalContext.current
+
+    val imageUris = remember { mutableStateListOf<Uri>() }
+    var plateNo by remember { mutableStateOf("") }
+    var title by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var price by remember { mutableStateOf("") }
+    val selectedLocation = remember { mutableStateOf<LatLng?>(null) }
+    val addressText = remember { mutableStateOf("Address not found") }
+    var pinCode by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var phoneNumber by remember { mutableStateOf("") }
+
+    when {
+        postState.value.loading -> {
+            CustomLoadingBar()
+        }
+
+        postState.value.error != null -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(1f), contentAlignment = Alignment.Center
+            ) {
+                Text(text = postState.value.error ?: "")
+            }
+
+            Toast.makeText(context, postState.value.error, Toast.LENGTH_SHORT).show()
+        }
+
+        postState.value.data != null -> {
+            Toast.makeText(context, "Post Success", Toast.LENGTH_SHORT).show()
+            postState.value.data = null
+            navController.navigate(Routes.HomeScreenRoute)
+        }
+
+    }
+
+
     Scaffold(topBar = {
         CenterAlignedTopAppBar(
             title = {
@@ -114,32 +166,103 @@ fun AddScreenUI(navController: NavController,viewModel: AppViewModel = hiltViewM
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-
             ) {
             item {
-                AddPhotosSec()
+                AddPhotosSec(imageUris)
             }
             item {
-                VehicleSpecificationSec()
+                VehicleSpecificationSec(plateNo, onValueChange = { plateNo = it })
             }
             item {
-                AddCarDetails()
+                AddCarDetails(
+                    title = title,
+                    onTitleChange = { title = it },
+                    description = description,
+                    onDescriptionChange = { description = it },
+                    price = price,
+                    onPriceChange = { price = it })
             }
             item {
-                ContactDetailSec()
+                ContactDetailSec(
+                    email = email,
+                    onEmailChange = { email = it },
+                    phoneNumber = phoneNumber,
+                    onPhoneNumberChange = { phoneNumber = it }
+                )
             }
             item {
-                LocationDetail()
+                LocationDetail(selectedLocation, addressText.value, showDialog)
+            }
+            item {
+                CustomButton(
+                    onClick = {
+                        viewModel.carPost(
+                            CarPostRequest(
+                                category_id = "80",
+                                title = title,
+                                description = description,
+                                plate_no = plateNo,
+                                price = price,
+                                email = email,
+                                visibility = "public",
+                                address = addressText.value,
+                                video_link = "",
+                                website_link = "",
+                                country = "India",
+                                latitude = selectedLocation.value?.latitude.toString(),
+                                longitude = selectedLocation.value?.longitude.toString(),
+                                year = "",
+                                body_type = "",
+                                transmission = "",
+                                colour = "",
+                                seats = "",
+                                doors = "",
+                                luggage_capacity = "",
+                                fuel_type = "",
+                                engine_power = "",
+                                engine_size = "",
+                                top_speed = "",
+                                acceleration = "",
+                                fuel_consumption = "",
+                                fuel_capacity = "",
+                                insurance_group = "",
+                                images = imageUris.map { it.toString() },
+                                contact_no = phoneNumber,
+                                brochure_engine_size = ""
+                            ),
+                            context
+                        )
+                    }, text = "Post", modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 10.dp)
+                )
             }
         }
+        if (showDialog.value) {
+            PinCodeDialog(
+                onPinCodeSubmit = { pinCode ->
+                    val (location, address) = getLocationFromPinCode(context, pinCode)
+                    return@PinCodeDialog if (location != null && address != null) {
+                        selectedLocation.value = location
+                        addressText.value = address
+                        showDialog.value = false
+                        true
+                    } else {
+                        false
+                    }
+                },
+                onDismiss = { showDialog.value = false },
+                pinCode = pinCode,
+                onPinCodeChange = { pinCode = it })
 
+        }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddPhotosSec() {
-    val imageUris = remember { mutableStateListOf<Uri>() }
+fun AddPhotosSec(imageUris: MutableList<Uri>) {
+
     val maxImages = 20
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetMultipleContents()
@@ -227,7 +350,8 @@ fun AddPhotosSec() {
                                 contentScale = ContentScale.Crop
                             )
 
-                            Icon(imageVector = Icons.Default.Close,
+                            Icon(
+                                imageVector = Icons.Default.Close,
                                 contentDescription = "Remove Image",
                                 tint = Color.Red,
                                 modifier = Modifier
@@ -282,9 +406,7 @@ fun AddPhotosSec() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VehicleSpecificationSec() {
-
-    var plateNo by remember { mutableStateOf("") }
+fun VehicleSpecificationSec(plateNo: String, onValueChange: (String) -> Unit) {
 
     val bottomSheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
@@ -319,8 +441,9 @@ fun VehicleSpecificationSec() {
                 fontWeight = FontWeight.SemiBold
             )
             Spacer(modifier = Modifier.size(5.dp))
-            CustomTextField(value = plateNo,
-                onValueChange = { plateNo = it.uppercase() },
+            CustomTextField(
+                value = plateNo,
+                onValueChange = { onValueChange(it.uppercase()) },
                 placeholderText = "Enter REG",
                 leadingIcon = {
                     Icon(
@@ -330,10 +453,10 @@ fun VehicleSpecificationSec() {
                     )
                 })
         }
-        CustomButton(
-            onClick = { }, text = "Look up details", enabled = plateNo.isNotBlank()
-        )
-        Spacer(modifier = Modifier.size(5.dp))
+//        CustomButton(
+//            onClick = { }, text = "Look up details", enabled = plateNo.isNotBlank()
+//        )
+//        Spacer(modifier = Modifier.size(5.dp))
         Text(
             text = "Vehicle standard features", fontSize = 18.sp, fontWeight = FontWeight.Bold
         )
@@ -348,9 +471,7 @@ fun VehicleSpecificationSec() {
                 .clickable {
                     showBottomSheet = true
                 }
-                .padding(horizontal = 15.dp),
-            contentAlignment = Alignment.CenterStart
-        ) {
+                .padding(horizontal = 15.dp), contentAlignment = Alignment.CenterStart) {
             Row {
                 Text(
                     text = if (selectedFeatures.isEmpty()) "Select Features" else selectedFeatures.joinToString(
@@ -393,9 +514,7 @@ fun VehicleSpecificationSec() {
                     .padding(horizontal = 16.dp)
             ) {
                 Text(
-                    text = "Vehicle Features",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
+                    text = "Vehicle Features", fontSize = 20.sp, fontWeight = FontWeight.Bold
                 )
                 LazyColumn(
                     modifier = Modifier.weight(1f)
@@ -411,27 +530,23 @@ fun VehicleSpecificationSec() {
                                     } else {
                                         selectedFeatures.add(feature)
                                     }
-                                },
-                            verticalAlignment = Alignment.CenterVertically
+                                }, verticalAlignment = Alignment.CenterVertically
                         ) {
                             Checkbox(
-                                checked = selectedFeatures.contains(feature),
-                                onCheckedChange = {
+                                checked = selectedFeatures.contains(feature), onCheckedChange = {
                                     if (selectedFeatures.contains(feature)) {
                                         selectedFeatures.remove(feature)
                                     } else {
                                         selectedFeatures.add(feature)
                                     }
-                                }
-                            )
+                                })
                             Text(text = feature, fontSize = 16.sp)
                         }
                     }
                 }
 
                 CustomButton(
-                    onClick = { showBottomSheet = false },
-                    text = "Done"
+                    onClick = { showBottomSheet = false }, text = "Done"
                 )
 
             }
@@ -440,11 +555,15 @@ fun VehicleSpecificationSec() {
 }
 
 @Composable
-fun AddCarDetails() {
+fun AddCarDetails(
+    title: String,
+    onTitleChange: (String) -> Unit,
+    description: String,
+    onDescriptionChange: (String) -> Unit,
+    price: String,
+    onPriceChange: (String) -> Unit
+) {
 
-    var title by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var price by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
@@ -460,7 +579,7 @@ fun AddCarDetails() {
                 }, fontSize = 18.sp, fontWeight = FontWeight.Bold
             )
             CustomTextField(
-                value = title, onValueChange = { title = it }, imeAction = ImeAction.Next
+                value = title, onValueChange = { onTitleChange(it) }, imeAction = ImeAction.Next
             )
         }
 
@@ -477,7 +596,7 @@ fun AddCarDetails() {
                 value = description,
                 onValueChange = {
                     if (it.length <= 100) {
-                        description = it
+                        onDescriptionChange(it)
                     }
                 },
                 singleLine = false,
@@ -486,28 +605,29 @@ fun AddCarDetails() {
                 imeAction = ImeAction.Next
 
             )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 5.dp),
-            ) {
-                val wordCount =
-                    description.trim().split("\\s+".toRegex()).filter { it.isNotBlank() }.size
-                val isValid = wordCount >= 12
-
-                Text(
-                    text = if (wordCount < 12) "12 Words minimum" else "",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (isValid) Color.Gray else Color.Red,
-                    modifier = Modifier.weight(1f)
-                )
-                Text(
-                    text = "${description.length}/100",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Color.Gray,
-                    modifier = Modifier
-                )
-            }
+//            Row(
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(horizontal = 5.dp),
+//            ) {
+//                val wordCount =
+//                    description.trim().split("\\s+".toRegex()).filter { it.isNotBlank() }.size
+//                val isValid = wordCount >= 12
+//
+//                Text(
+//                    text = if (wordCount < 12) "12 Words minimum" else "",
+//                    style = MaterialTheme.typography.bodyMedium,
+//                    color = if (isValid) Color.Gray else Color.Red,
+//                    modifier = Modifier.weight(1f)
+//                )
+            Text(
+                text = "${description.length}/100",
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.Gray,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.End
+            )
+//            }
         }
 
         Column {
@@ -521,7 +641,7 @@ fun AddCarDetails() {
             )
             CustomTextField(
                 value = price,
-                onValueChange = { price = it },
+                onValueChange = { onPriceChange(it) },
                 onlyNumbers = true,
                 leadingIcon = {
                     Icon(
@@ -534,7 +654,6 @@ fun AddCarDetails() {
                 keyboardType = KeyboardType.Number,
             )
         }
-
         HorizontalDivider(
             thickness = 1.dp, color = Color.LightGray, modifier = Modifier.padding(vertical = 10.dp)
         )
@@ -542,7 +661,12 @@ fun AddCarDetails() {
 }
 
 @Composable
-fun ContactDetailSec() {
+fun ContactDetailSec(
+    email: String,
+    onEmailChange: (String) -> Unit,
+    phoneNumber: String,
+    onPhoneNumberChange: (String) -> Unit
+) {
     var messageChecked by remember { mutableStateOf(true) }
     var phoneChecked by remember { mutableStateOf(false) }
     var isEdit by remember { mutableStateOf(false) }
@@ -579,8 +703,7 @@ fun ContactDetailSec() {
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.clickable {
                     isEdit = !isEdit
-                }
-            )
+                })
 
         }
         if (!isEdit) {
@@ -600,9 +723,9 @@ fun ContactDetailSec() {
                     )
                     Text(
                         text = buildAnnotatedString {
-                            append("Get notified via")
+                            append("Get notified via ")
                             withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                append(" User@gmail.com")
+                                append(if(email != "")  email else  "User@gmail.com")
 
                             }
                         }, style = MaterialTheme.typography.bodyLarge, color = Color.Gray
@@ -624,27 +747,42 @@ fun ContactDetailSec() {
                     text = "Phone:", fontSize = 16.sp, fontWeight = FontWeight.Bold
                 )
                 Spacer(Modifier.size(10.dp))
-                IconButton(onClick = {
-                    isEdit = true
-                }) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null,
-                        modifier = Modifier.size(25.dp),
-                        tint = MaterialTheme.colorScheme.primary
+                if (phoneNumber != "") {
+                    Text(
+                        text = phoneNumber, fontSize = 16.sp, color = Color.Gray
+                    )
+                } else {
+                    IconButton(onClick = {
+                        isEdit = true
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            modifier = Modifier.size(25.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    Text(
+                        text = "Add phone number", fontSize = 16.sp, color = Color.Gray
                     )
                 }
-                Text(
-                    text = "Add phone number", fontSize = 16.sp, color = Color.Gray
-                )
-
 
             }
         } else {
-            Text(
-                text = "Messages on platform",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
+            Text(text= "Email :" , fontWeight = FontWeight.Bold)
+            CustomTextField(
+                value = email,
+                onValueChange = { onEmailChange(it) },
+                placeholderText = "Enter Email",
+            )
+            Text(text = "Phone Number :", fontWeight = FontWeight.Bold)
+            CustomTextField(
+                value = phoneNumber,
+                onValueChange = { onPhoneNumberChange(it) },
+                placeholderText = "Enter Phone Number",
+                keyboardType = KeyboardType.Phone,
+                onlyNumbers = true,
             )
         }
     }
@@ -655,12 +793,14 @@ fun ContactDetailSec() {
 }
 
 @Composable
-fun LocationDetail() {
-    var showMap by remember { mutableStateOf(false) }
+fun LocationDetail(
+    selectedLocation: MutableState<LatLng?>, address: String, showDialog: MutableState<Boolean>
+) {
+    var showMap by rememberSaveable { mutableStateOf(false) }
     Column(
         modifier = Modifier.padding(horizontal = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(5.dp)
-    ) {
+
+        ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -676,7 +816,9 @@ fun LocationDetail() {
             )
 
             Spacer(Modifier.weight(1f))
-            IconButton(onClick = { /*TODO*/ }) {
+            IconButton(onClick = {
+                showDialog.value = true
+            }) {
                 Text(
                     text = "Edit",
                     fontWeight = FontWeight.Bold,
@@ -686,15 +828,8 @@ fun LocationDetail() {
             }
         }
         Text(
-            text = buildAnnotatedString {
-                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                    append("Delhi, India ")
-                }
-                append("/ 209801")
-            },
-            fontSize = 16.sp,
-
-            )
+            text = address, fontSize = 16.sp, fontWeight = FontWeight.Bold
+        )
         Row(
             verticalAlignment = Alignment.CenterVertically,
 
@@ -721,15 +856,18 @@ fun LocationDetail() {
                         .fillMaxSize()
                         .background(MaterialTheme.colorScheme.onPrimary)
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.map_img),
-                        contentDescription = null,
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(0.7f),
-                        contentScale = ContentScale.Crop
+                        contentAlignment = Alignment.Center
+                    ) {
+                        GoogleMapScreen(
+                            targetLocation = selectedLocation.value,
+                        )
 
-                    )
+                    }
+
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -737,7 +875,7 @@ fun LocationDetail() {
                             .padding(10.dp)
                     ) {
                         Text(
-                            text = "Delhi, India",
+                            text = address,
                             style = MaterialTheme.typography.titleMedium,
                         )
                         Text(
@@ -756,11 +894,100 @@ fun LocationDetail() {
     HorizontalDivider(
         thickness = 1.dp, color = Color.LightGray, modifier = Modifier.padding(vertical = 10.dp)
     )
-    CustomButton(
-        onClick = {}, text = "Post", modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 10.dp)
-    )
 
 }
+
+
+@Composable
+fun GoogleMapScreen(
+    targetLocation: LatLng?,
+) {
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(targetLocation ?: LatLng(0.0, 0.0), 15f)
+    }
+    val markerState = rememberMarkerState(position = targetLocation ?: LatLng(0.0, 0.0))
+
+    val singapore = LatLng(1.35, 103.87)
+    val singaporeMarkerState = rememberMarkerState(position = singapore)
+//    val cameraPositionState = rememberCameraPositionState {
+//        position = CameraPosition.fromLatLngZoom(singapore, 10f)
+//    }
+    LaunchedEffect(targetLocation) {
+        targetLocation?.let {
+            cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(it, 15f))
+            markerState.position = it
+        }
+    }
+    GoogleMap(
+        modifier = Modifier.fillMaxSize(), cameraPositionState = cameraPositionState, onMapClick = {
+            singaporeMarkerState.position = it
+        }) {
+        Marker(
+            state = markerState, title = "Singapore", snippet = "Marker in Singapore"
+        )
+    }
+
+}
+
+
+fun getLocationFromPinCode(context: Context, pinCode: String): Pair<LatLng?, String?> {
+    return try {
+        val geocoder = Geocoder(context, Locale.getDefault())
+        val addresses = geocoder.getFromLocationName(pinCode, 1)
+        if (!addresses.isNullOrEmpty()) {
+            val location = addresses[0]
+            val latLng = LatLng(location.latitude, location.longitude)
+            val addressLine = location.getAddressLine(0) ?: "Unknown"
+            Pair(latLng, addressLine)
+        } else Pair(null, null)
+    } catch (e: Exception) {
+        Pair(null, null)
+    }
+}
+
+
+@Composable
+fun PinCodeDialog(
+    onPinCodeSubmit: (String) -> Boolean,
+    onDismiss: () -> Unit,
+    pinCode: String,
+    onPinCodeChange: (String) -> Unit
+) {
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    AlertDialog(onDismissRequest = onDismiss, title = { Text("Enter PinCode") }, text = {
+        Column {
+            TextField(
+                value = pinCode,
+                onValueChange = {
+                    if (it.length <= 6 && it.all { char -> char.isDigit() }) onPinCodeChange(it)
+                    errorMessage = null
+                },
+                label = { Text("PinCode") },
+                isError = errorMessage != null,
+            )
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage ?: "",
+                    color = Color.Red,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+    }, confirmButton = {
+        Button(onClick = {
+            val isValid = onPinCodeSubmit(pinCode)
+            if (!isValid) {
+                errorMessage = "Please enter a valid pin code"
+            }
+        }) {
+            Text("Submit")
+        }
+    }, dismissButton = {
+        Button(onClick = onDismiss) {
+            Text("Cancel")
+        }
+    })
+}
+
+
 

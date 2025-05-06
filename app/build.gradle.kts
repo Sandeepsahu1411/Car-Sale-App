@@ -96,6 +96,9 @@ dependencies {
 //lottie Animation
     implementation("com.airbnb.android:lottie-compose:6.1.0")
 
+// google map
+
+    implementation("com.google.maps.android:maps-compose:6.2.1")
 
 
 
