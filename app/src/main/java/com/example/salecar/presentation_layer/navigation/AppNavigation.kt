@@ -37,7 +37,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.example.salecar.preference_db.UserPreferenceManager
-import com.example.salecar.presentation_layer.screens.bottom_screen.AddScreenUI
+import com.example.salecar.presentation_layer.screens.bottom_screen.add_screen.AddScreenUI
 import com.example.salecar.presentation_layer.screens.bottom_screen.HomeScreenUI
 import com.example.salecar.presentation_layer.screens.bottom_screen.MassageScreenUI
 import com.example.salecar.presentation_layer.screens.bottom_screen.ProfileScreenUI

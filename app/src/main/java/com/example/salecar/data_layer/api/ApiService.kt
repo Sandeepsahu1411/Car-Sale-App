@@ -2,6 +2,7 @@ package com.example.salecar.data_layer.api
 
 import com.example.salecar.data_layer.response.car_detail_res.CarDetailResponse
 import com.example.salecar.data_layer.response.car_post_res.CarPostResponse
+import com.example.salecar.data_layer.response.category_res.CarCategoryResponse
 import com.example.salecar.data_layer.response.home_res.HomeScreenResponse
 import com.example.salecar.data_layer.response.login_res.LoginResponse
 import com.example.salecar.data_layer.response.signup_res.SignUpResponse
@@ -93,5 +94,9 @@ interface ApiService {
         @PartMap data: Map<String, @JvmSuppressWildcards RequestBody>,
         @Part images: List<MultipartBody.Part>
     ): Response<CarPostResponse>
+
+    @GET("getCategories.php")
+    suspend fun getCarCategory(): Response<CarCategoryResponse>
+
 
 }

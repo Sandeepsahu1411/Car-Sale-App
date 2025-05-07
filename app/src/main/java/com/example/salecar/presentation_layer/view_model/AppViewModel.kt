@@ -8,6 +8,7 @@ import com.example.salecar.ResultState
 import com.example.salecar.data_layer.response.car_detail_res.CarDetailResponse
 import com.example.salecar.data_layer.response.car_post_res.CarPostRequest
 import com.example.salecar.data_layer.response.car_post_res.CarPostResponse
+import com.example.salecar.data_layer.response.category_res.CarCategoryResponse
 import com.example.salecar.data_layer.response.home_res.Data
 import com.example.salecar.data_layer.response.home_res.HomeScreenResponse
 
@@ -41,6 +42,9 @@ class AppViewModel @Inject constructor(
 
     private val _carPostState = MutableStateFlow(CarPostState())
     val carPostState = _carPostState.asStateFlow()
+
+    private val _carCategoryState = MutableStateFlow(CarCategoryState())
+    val carCategoryState = _carCategoryState.asStateFlow()
 
     fun login(email: String, password: String) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -100,6 +104,7 @@ class AppViewModel @Inject constructor(
 
     init {
         getHomeScreen()
+        carCategory()
     }
 
     fun getHomeScreen() {
@@ -148,10 +153,9 @@ class AppViewModel @Inject constructor(
         }
     }
 
-
     fun carPost(request: CarPostRequest, context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
-            repo.carPostRepo(request , context).collect {
+            repo.carPostRepo(request, context).collect {
                 when (it) {
                     is ResultState.Loading -> {
                         _carPostState.value = CarPostState(loading = true)
@@ -169,6 +173,27 @@ class AppViewModel @Inject constructor(
         }
 
     }
+
+    fun carCategory() {
+        viewModelScope.launch(Dispatchers.IO) {
+            repo.carCategoryRepo().collect {
+                when (it) {
+                    is ResultState.Loading -> {
+                        _carCategoryState.value = CarCategoryState(loading = true)
+                    }
+
+                    is ResultState.Success -> {
+                        _carCategoryState.value = CarCategoryState(data = it.data)
+                    }
+
+                    is ResultState.Error -> {
+                        _carCategoryState.value = CarCategoryState(error = it.message)
+                    }
+                }
+            }
+        }
+    }
+
 
 }
 
@@ -193,12 +218,18 @@ data class HomeScreenState(
 data class CarDetailState(
     val loading: Boolean = false,
     var error: String? = null,
-    var data: Response<CarDetailResponse>? = null,
+    var data: Response<CarDetailResponse>? = null
 )
 
 data class CarPostState(
     val loading: Boolean = false,
     var error: String? = null,
-    var data: Response<CarPostResponse>? = null,
+    var data: Response<CarPostResponse>? = null
 
-    )
+)
+
+data class CarCategoryState(
+    val loading: Boolean = false,
+    var error: String? = null,
+    var data: Response<CarCategoryResponse>? = null
+)
