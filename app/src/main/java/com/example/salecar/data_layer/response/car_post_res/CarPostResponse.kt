@@ -15,6 +15,7 @@ data class CarPostResponse(
 
 data class CarPostRequest(
     val category_id: String,
+    val user_id: String,
     val title: String,
     val description: String,
     val plate_no: String,
@@ -44,6 +45,7 @@ data class CarPostRequest(
     val insurance_group: String,
     val images: List<String>,
     val contact_no: String,
+    val pincode: String,
     val brochure_engine_size: String,
 )
 fun CarPostRequest.toMultipart(context: android.content.Context): Pair<Map<String, RequestBody>, List<MultipartBody.Part>> {
@@ -80,6 +82,8 @@ fun CarPostRequest.toMultipart(context: android.content.Context): Pair<Map<Strin
     map["fuel_capacity"] = fuel_capacity.toRequestBody()
     map["insurance_group"] = insurance_group.toRequestBody()
     map["contact_no"] = contact_no.toRequestBody()
+    map["user_id"] = user_id.toRequestBody()
+    map["pincode"] = pincode.toRequestBody()
     map["brochure_engine_size"] = brochure_engine_size.toRequestBody()
 
     val imageParts = images.mapIndexedNotNull { index, uri ->

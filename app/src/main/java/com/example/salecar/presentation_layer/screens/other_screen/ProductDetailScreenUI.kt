@@ -1,6 +1,7 @@
 package com.example.salecar.presentation_layer.screens.other_screen
 
 import android.R.attr.fontWeight
+import android.R.attr.lineHeight
 import android.R.attr.text
 import android.util.Log
 import android.widget.Toast
@@ -232,6 +233,7 @@ fun ProductDetail(data: CarData?, navController: NavController, product: List<Da
     val baseUrl = "https://aidot.uk/sellcar/"
     var isFavorite by remember { mutableStateOf(false) }
 
+
     ProductImageSlider(
         images = data?.images ?: emptyList(), baseUrl = baseUrl
     )
@@ -286,7 +288,7 @@ fun ProductDetail(data: CarData?, navController: NavController, product: List<Da
                 tint = MaterialTheme.colorScheme.onSecondary,
             )
             Text(
-                text = "Noida-63",
+                text = data?.address ?: "New Delhi",
                 style = MaterialTheme.typography.bodyLarge.copy(
                     textDecoration = TextDecoration.Underline
                 ),

@@ -47,6 +47,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -91,6 +92,9 @@ import com.google.android.gms.maps.model.LatLng
 @Composable
 fun AddScreenUI(navController: NavController, viewModel: AppViewModel = hiltViewModel()) {
     val postState = viewModel.carPostState.collectAsState()
+    val getUserState = viewModel.getUserByIdState.collectAsState()
+    val data = getUserState.value.data?.body()?.data
+
 
     val showDialog = remember { mutableStateOf(true) }
     val context = LocalContext.current
@@ -107,12 +111,15 @@ fun AddScreenUI(navController: NavController, viewModel: AppViewModel = hiltView
     var email by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
     val categoryState = viewModel.carCategoryState.collectAsState()
-    val subcategories = remember { mutableStateListOf<Children>() }
     val selectedCategory = remember { mutableStateOf<String?>(null) }
 
-
+    LaunchedEffect(getUserState.value.data) {
+        getUserState.value.data?.body()?.data?.let {
+            email = it.email
+        }
+    }
     when {
-        categoryState.value.loading -> {
+        categoryState.value.loading && getUserState.value.loading -> {
             CustomLoadingBar()
         }
 
@@ -121,11 +128,16 @@ fun AddScreenUI(navController: NavController, viewModel: AppViewModel = hiltView
         }
 
         categoryState.value.data != null -> {
-//            selectedCategory.value = categoryState.value.data?.body()?.data?.get(0)?.id.toString()
             Log.d("CategoryData", "Category Data: ${categoryState.value.data?.body()?.data}")
 
 
         }
+
+        getUserState.value.error != null -> {
+            Toast.makeText(context, getUserState.value.error, Toast.LENGTH_SHORT).show()
+        }
+
+
     }
     when {
         postState.value.loading -> {
@@ -151,6 +163,7 @@ fun AddScreenUI(navController: NavController, viewModel: AppViewModel = hiltView
         }
 
     }
+
 
     Scaffold(topBar = {
         CenterAlignedTopAppBar(
@@ -245,6 +258,14 @@ fun AddScreenUI(navController: NavController, viewModel: AppViewModel = hiltView
                 item {
                     CustomButton(
                         onClick = {
+                            if (title.isBlank() || description.isBlank() || plateNo.isBlank() || price.isBlank() || selectedLocation.value == null || imageUris.isEmpty()) {
+                                Toast.makeText(
+                                    context,
+                                    "Please fill all the fields",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                return@CustomButton
+                            }
                             viewModel.carPost(
                                 CarPostRequest(
                                     category_id = selectedCategory.value ?: "0",
@@ -277,8 +298,11 @@ fun AddScreenUI(navController: NavController, viewModel: AppViewModel = hiltView
                                     insurance_group = "",
                                     images = imageUris.map { it.toString() },
                                     contact_no = phoneNumber,
-                                    brochure_engine_size = ""
-                                ),
+                                    pincode = pinCode,
+                                    brochure_engine_size = "",
+                                    user_id = data?.id.toString(),
+
+                                    ),
                                 context
                             )
                         }, text = "Post", modifier = Modifier
@@ -835,7 +859,7 @@ fun LocationDetail(
     selectedLocation: MutableState<LatLng?>, address: String, showDialog: MutableState<Boolean>
 ) {
     var showMap by rememberSaveable { mutableStateOf(false) }
-    Column{
+    Column {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -925,7 +949,7 @@ fun LocationDetail(
 
 
     }
-    CustomDivider()
+
 
 }
 

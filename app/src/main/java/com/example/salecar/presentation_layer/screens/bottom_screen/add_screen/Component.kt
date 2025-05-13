@@ -6,8 +6,10 @@ import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -147,7 +149,7 @@ fun CategoryDropdownMenu(
     var subcategoryExpanded by remember { mutableStateOf(false) }
     var selectedSubCategory by remember { mutableStateOf<Children?>(null) }
 
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(bottom = 5.dp)) {
         Column(modifier = Modifier.weight(0.5f)) {
             Text(text = "Select Category", fontWeight = FontWeight.SemiBold)
 

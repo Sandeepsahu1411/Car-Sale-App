@@ -13,7 +13,9 @@ import com.example.salecar.data_layer.response.home_res.Data
 import com.example.salecar.data_layer.response.home_res.HomeScreenResponse
 
 import com.example.salecar.data_layer.response.login_res.LoginResponse
+import com.example.salecar.data_layer.response.profile_res.PostListingResponse
 import com.example.salecar.data_layer.response.signup_res.SignUpResponse
+import com.example.salecar.data_layer.response.user_res.GetUserByIdResponse
 import com.example.salecar.doman_layer.Repo
 import com.example.salecar.preference_db.UserPreferenceManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -45,6 +47,12 @@ class AppViewModel @Inject constructor(
 
     private val _carCategoryState = MutableStateFlow(CarCategoryState())
     val carCategoryState = _carCategoryState.asStateFlow()
+
+    private val _getUserByIdState = MutableStateFlow(GetUserByIdState())
+    val getUserByIdState = _getUserByIdState.asStateFlow()
+
+    private val _postListingState = MutableStateFlow(PostListingState())
+    val postListingState = _postListingState.asStateFlow()
 
     fun login(email: String, password: String) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -105,6 +113,15 @@ class AppViewModel @Inject constructor(
     init {
         getHomeScreen()
         carCategory()
+
+        viewModelScope.launch {
+            userPreferenceManager.userID.collect {
+                if (it != null) {
+                    getUserById(it)
+                    postListing(it)
+                }
+            }
+        }
     }
 
     fun getHomeScreen() {
@@ -194,6 +211,45 @@ class AppViewModel @Inject constructor(
         }
     }
 
+    fun getUserById(id: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repo.getUserById(id).collect {
+                when (it) {
+                    is ResultState.Loading -> {
+                        _getUserByIdState.value = GetUserByIdState(loading = true)
+                    }
+
+                    is ResultState.Success -> {
+                        _getUserByIdState.value = GetUserByIdState(data = it.data)
+                    }
+
+                    is ResultState.Error -> {
+                        _getUserByIdState.value = GetUserByIdState(error = it.message)
+                    }
+                }
+            }
+        }
+    }
+
+    fun postListing(id: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repo.carListing(id).collect {
+                when (it) {
+                    is ResultState.Loading -> {
+                        _postListingState.value = PostListingState(loading = true)
+                    }
+
+                    is ResultState.Success -> {
+                        _postListingState.value = PostListingState(data = it.data)
+                    }
+
+                    is ResultState.Error -> {
+                        _postListingState.value = PostListingState(error = it.message)
+                    }
+                }
+            }
+        }
+    }
 
 }
 
@@ -232,4 +288,17 @@ data class CarCategoryState(
     val loading: Boolean = false,
     var error: String? = null,
     var data: Response<CarCategoryResponse>? = null
+)
+
+data class GetUserByIdState(
+    val loading: Boolean = false,
+    var error: String? = null,
+    var data: Response<GetUserByIdResponse>? = null
+)
+
+data class PostListingState(
+    val loading: Boolean = false,
+    var error: String? = null,
+    var data: Response<PostListingResponse>? = null
+
 )

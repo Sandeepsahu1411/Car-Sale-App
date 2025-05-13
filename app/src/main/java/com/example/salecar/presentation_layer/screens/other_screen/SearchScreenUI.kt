@@ -79,7 +79,7 @@ fun SearchScreenUI(navController: NavController, viewModel: AppViewModel = hiltV
                         val baseUrl = "https://aidot.uk/sellcar/"
 
                         val imageUrl =
-                            if (it.images.isNotEmpty()) baseUrl + it.images.first() else ""
+                            if (!it.images.isNullOrEmpty()) baseUrl + it.images.first() else R.drawable.no_image_avl
 
                         Row(
                             modifier = Modifier.fillMaxWidth()
@@ -92,7 +92,7 @@ fun SearchScreenUI(navController: NavController, viewModel: AppViewModel = hiltV
 
                         ) {
                             SubcomposeAsyncImage(
-                                model = if (imageUrl.isNotEmpty()) imageUrl else R.drawable.car1,
+                                model =  imageUrl ,
                                 contentDescription = null,
                                 loading = {
                                     CustomLoadingBar(20.dp)
