@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -70,6 +71,7 @@ import com.example.salecar.data_layer.response.home_res.Data
 import com.example.salecar.data_layer.response.home_res.HomeScreenResponse
 import com.example.salecar.presentation_layer.navigation.Routes
 import com.example.salecar.presentation_layer.screens.common_component.CustomLoadingBar
+import com.example.salecar.presentation_layer.screens.common_component.rememberShimmerBrush
 import com.example.salecar.presentation_layer.view_model.AppViewModel
 import kotlinx.parcelize.Parcelize
 
@@ -119,7 +121,7 @@ fun HomeScreenUI(navController: NavController, viewModel: AppViewModel = hiltVie
             )
             when {
                 homeScreenState.value.loading -> {
-                    CustomLoadingBar()
+                    ShimmerHomeGridItem()
                 }
 
                 homeScreenState.value.error != null -> {
@@ -288,3 +290,46 @@ fun ProductCard(product: Data, onClick: (Data) -> Unit, isFavorite: Boolean = fa
     }
 }
 
+@Composable
+fun ShimmerHomeGridItem() {
+    val brush = rememberShimmerBrush()
+
+    LazyVerticalGrid(columns = GridCells.Fixed(2)) {
+        items(8) {
+
+
+            Column(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Color.White)
+                    .padding(10.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .height(120.dp)
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(brush)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Box(
+                    modifier = Modifier
+                        .height(20.dp)
+                        .fillMaxWidth(0.6f)
+                        .background(brush)
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Box(
+                    modifier = Modifier
+                        .height(16.dp)
+                        .fillMaxWidth(0.4f)
+                        .background(brush)
+                )
+            }
+        }
+    }
+}

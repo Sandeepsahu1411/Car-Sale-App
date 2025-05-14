@@ -51,5 +51,8 @@ sealed class Routes {
         val id : String
     ) : Routes()
 
+    @Serializable
+    object SettingScreenRoute : Routes()
+
 
 }

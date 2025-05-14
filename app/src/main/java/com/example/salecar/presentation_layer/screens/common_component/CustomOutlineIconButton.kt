@@ -30,19 +30,20 @@ fun CustomOutlineButton(
     text: String,
     iconRes: Int? = null,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
     border: BorderStroke? = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
 ) {
     OutlinedButton(
         onClick = onClick,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .height(50.dp),
+            .height(40.dp),
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = Color.Transparent,
             contentColor = MaterialTheme.colorScheme.onSecondary
         ),
         border = border,
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(8.dp),
     ) {
         IconWithText(iconRes = iconRes, text = text)
     }

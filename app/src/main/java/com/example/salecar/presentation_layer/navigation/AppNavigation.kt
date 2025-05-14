@@ -46,6 +46,7 @@ import com.example.salecar.presentation_layer.screens.common_component.CustomBot
 import com.example.salecar.presentation_layer.screens.other_screen.NotificationScreenUI
 import com.example.salecar.presentation_layer.screens.other_screen.ProductDetailScreenUI
 import com.example.salecar.presentation_layer.screens.other_screen.SearchScreenUI
+import com.example.salecar.presentation_layer.screens.other_screen.SettingScreenUI
 import com.example.salecar.presentation_layer.screens.start_screen.LoginScreenUI
 import com.example.salecar.presentation_layer.screens.start_screen.SignUpScreenUI
 import com.example.salecar.presentation_layer.screens.start_screen.SplashScreenUI
@@ -57,7 +58,7 @@ fun AppNavigation() {
     val navController = rememberNavController()
 
     val userPreferenceManager = UserPreferenceManager(LocalContext.current)
-    val viewModel : AppViewModel = hiltViewModel()
+    val viewModel: AppViewModel = hiltViewModel()
     var selectedItemIndex by remember { mutableIntStateOf(0) }
 
     var bottomBarVisible by remember { mutableStateOf(false) }
@@ -75,10 +76,12 @@ fun AppNavigation() {
             Routes.ProductDetailScreenRoute::class.qualifiedName
         )
     }
-    Scaffold(containerColor = MaterialTheme.colorScheme.background,
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         modifier = Modifier.fillMaxSize(),
         floatingActionButton = {
-            AnimatedVisibility(visible = bottomBarVisible,
+            AnimatedVisibility(
+                visible = bottomBarVisible,
                 enter = fadeIn(animationSpec = tween(durationMillis = 200)) + slideInVertically { it },
                 exit = fadeOut(animationSpec = tween(durationMillis = 500)) + slideOutVertically { it }) {
                 FloatingActionButton(
@@ -94,7 +97,8 @@ fun AppNavigation() {
         },
         floatingActionButtonPosition = FabPosition.Center,
         bottomBar = {
-            AnimatedVisibility(visible = bottomBarVisible,
+            AnimatedVisibility(
+                visible = bottomBarVisible,
                 enter = fadeIn(animationSpec = tween(durationMillis = 200)) + slideInVertically { it },
                 exit = fadeOut(animationSpec = tween(durationMillis = 1000)) + slideOutVertically { it }) {
                 CustomBottomBar(selectedItemIndex = selectedItemIndex, onItemSelected = { index ->
@@ -149,7 +153,7 @@ fun AppNavigation() {
                         WishListScreenUI(navController)
                     }
                     composable<Routes.ProfileScreenRoute> {
-                        ProfileScreenUI(navController,userPreferenceManager)
+                        ProfileScreenUI(navController)
                     }
                     composable<Routes.NotificationScreenRoute> {
                         NotificationScreenUI(navController)
@@ -162,7 +166,10 @@ fun AppNavigation() {
                     }
                     composable<Routes.ProductDetailScreenRoute> {
                         val id = it.arguments?.getString("id")
-                        ProductDetailScreenUI(navController,id,viewModel)
+                        ProductDetailScreenUI(navController, id, viewModel)
+                    }
+                    composable<Routes.SettingScreenRoute> {
+                        SettingScreenUI(navController, userPreferenceManager)
                     }
 
                 }
