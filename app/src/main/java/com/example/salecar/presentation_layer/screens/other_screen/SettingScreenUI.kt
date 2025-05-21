@@ -1,6 +1,5 @@
 package com.example.salecar.presentation_layer.screens.other_screen
 
-import android.net.ipsec.ike.SaProposal
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -43,22 +42,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.salecar.R
 import com.example.salecar.preference_db.UserPreferenceManager
 import com.example.salecar.presentation_layer.navigation.Routes
 import com.example.salecar.presentation_layer.navigation.SubNavigation
 import com.example.salecar.presentation_layer.screens.bottom_screen.add_screen.CustomDivider
 import com.example.salecar.presentation_layer.screens.common_component.CustomOutlineButton
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.nio.file.WatchEvent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,7 +62,8 @@ fun SettingScreenUI(
 ) {
     val scope = rememberCoroutineScope()
     var showDialog by remember { mutableStateOf(false) }
-    Scaffold(topBar = {
+    Scaffold(
+        topBar = {
         CenterAlignedTopAppBar(
             title = {
                 Text(
@@ -164,7 +159,10 @@ fun SettingRows(title: String = "", subTitle: String, onClick: () -> Unit) {
             }
         }
     }
-    CustomDivider()
+    CustomDivider(
+        thickness = 2.dp,
+
+    )
 
 }
 

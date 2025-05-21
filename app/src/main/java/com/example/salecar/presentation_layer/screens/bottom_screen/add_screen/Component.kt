@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.salecar.data_layer.response.category_res.Children
 import com.example.salecar.data_layer.response.category_res.Data
@@ -235,8 +236,10 @@ fun CategoryDropdownMenu(
 }
 
 @Composable
-fun CustomDivider() {
+fun CustomDivider(
+    thickness: Dp = 1.dp,
+) {
     HorizontalDivider(
-        thickness = 1.dp, color = Color.LightGray, modifier = Modifier.padding(vertical = 5.dp)
+        thickness = thickness, color = Color.LightGray, modifier = Modifier.padding(vertical = 5.dp)
     )
 }

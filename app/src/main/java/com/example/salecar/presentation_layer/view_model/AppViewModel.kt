@@ -11,7 +11,6 @@ import com.example.salecar.data_layer.response.car_post_res.CarPostResponse
 import com.example.salecar.data_layer.response.category_res.CarCategoryResponse
 import com.example.salecar.data_layer.response.home_res.Data
 import com.example.salecar.data_layer.response.home_res.HomeScreenResponse
-
 import com.example.salecar.data_layer.response.login_res.LoginResponse
 import com.example.salecar.data_layer.response.profile_res.PostListingResponse
 import com.example.salecar.data_layer.response.signup_res.SignUpResponse
@@ -30,6 +29,7 @@ import javax.inject.Inject
 class AppViewModel @Inject constructor(
     private val repo: Repo, private val userPreferenceManager: UserPreferenceManager
 ) : ViewModel() {
+
     private val _loginState = MutableStateFlow(LoginState())
     val loginState = _loginState.asStateFlow()
 
@@ -81,8 +81,6 @@ class AppViewModel @Inject constructor(
             }
 
         }
-
-
     }
 
     fun signUp(username: String, email: String, password: String) {

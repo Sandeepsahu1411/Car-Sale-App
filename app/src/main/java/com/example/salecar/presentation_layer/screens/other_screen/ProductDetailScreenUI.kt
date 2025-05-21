@@ -1,19 +1,16 @@
 package com.example.salecar.presentation_layer.screens.other_screen
 
-import android.R.attr.fontWeight
-import android.R.attr.lineHeight
-import android.R.attr.text
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -28,6 +26,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
@@ -52,6 +51,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,7 +60,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -76,6 +75,7 @@ import com.example.salecar.presentation_layer.screens.common_component.CustomBut
 import com.example.salecar.presentation_layer.screens.common_component.CustomLoadingBar
 import com.example.salecar.presentation_layer.screens.common_component.CustomTextField
 import com.example.salecar.presentation_layer.view_model.AppViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -171,57 +171,57 @@ fun AnimatedTopBar(navController: NavController, scrollBehavior: TopAppBarScroll
 
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
-        containerColor = Color.Transparent,
-        scrolledContainerColor = MaterialTheme.colorScheme.primaryContainer
-    ), title = { }, navigationIcon = {
-        Box(
-            modifier = Modifier
-                .padding(start = 10.dp)
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer)
-        ) {
-            IconButton(onClick = { navController.popBackStack() }) {
-                Icon(
-                    Icons.Default.ArrowBack,
-                    contentDescription = "Back",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(30.dp)
-                )
+            containerColor = Color.Transparent,
+            scrolledContainerColor = MaterialTheme.colorScheme.primaryContainer
+        ), title = { }, navigationIcon = {
+            Box(
+                modifier = Modifier
+                    .padding(start = 10.dp)
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+            ) {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(
+                        Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
             }
-        }
-    }, actions = {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer)
-        ) {
+        }, actions = {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+            ) {
 
-            IconButton(onClick = { }) {
-                Icon(
-                    Icons.Default.Share,
-                    contentDescription = "Back",
-                    tint = MaterialTheme.colorScheme.primary
-                )
+                IconButton(onClick = { }) {
+                    Icon(
+                        Icons.Default.Share,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
-        }
-        Spacer(Modifier.width(10.dp))
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer)
-        ) {
-            IconButton(onClick = { }) {
-                Icon(
-                    Icons.Default.MoreVert,
-                    contentDescription = "Back",
-                    tint = MaterialTheme.colorScheme.primary
-                )
+            Spacer(Modifier.width(10.dp))
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+            ) {
+                IconButton(onClick = { }) {
+                    Icon(
+                        Icons.Default.MoreVert,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
-        }
-    }, scrollBehavior = scrollBehavior
+        }, scrollBehavior = scrollBehavior
     )
 
 
@@ -403,7 +403,7 @@ fun ProductDetail(data: CarData?, navController: NavController, product: List<Da
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ProductImageSlider(images: List<String>, baseUrl: String) {
-
+    val scope = rememberCoroutineScope()
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { images.size })
     Column {
         HorizontalPager(
@@ -422,7 +422,7 @@ fun ProductImageSlider(images: List<String>, baseUrl: String) {
                 contentScale = ContentScale.Crop
             )
         }
-        Row(
+        LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 8.dp),
@@ -431,16 +431,36 @@ fun ProductImageSlider(images: List<String>, baseUrl: String) {
         ) {
             repeat(images.size) { index ->
                 val isSelected = pagerState.currentPage == index
-                Box(
-                    modifier = Modifier
+                item {
+                    Box(
+                        modifier = Modifier
+                            .size(if (isSelected) 40.dp else 35.dp)
+                            .padding(4.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .border(
+                                1.dp,
+                                MaterialTheme.colorScheme.primary,
+                                RoundedCornerShape(6.dp)
+                            )
+                            .clickable {
+                                scope.launch {
+                                    pagerState.animateScrollToPage(index)
+                                }
 
-                        .size(if (isSelected) 20.dp else 14.dp)
-                        .padding(4.dp)
-                        .background(
-                            if (isSelected) Color(0xFFD77A7A) else Color(0xFFF68B8B).copy(),
-                            shape = CircleShape
+
+                            }
+
+                    ) {
+                        SubcomposeAsyncImage(
+                            model = if (images.isNotEmpty()) baseUrl + images[index] else R.drawable.no_image_avl,
+                            contentDescription = null,
+                            loading = { CustomLoadingBar(10.dp) },
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
                         )
-                )
+                    }
+
+                }
             }
         }
 

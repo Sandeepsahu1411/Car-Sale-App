@@ -70,6 +70,7 @@ import com.example.salecar.R
 import com.example.salecar.data_layer.response.home_res.Data
 import com.example.salecar.data_layer.response.home_res.HomeScreenResponse
 import com.example.salecar.presentation_layer.navigation.Routes
+import com.example.salecar.presentation_layer.screens.common_component.CustomApiError
 import com.example.salecar.presentation_layer.screens.common_component.CustomLoadingBar
 import com.example.salecar.presentation_layer.screens.common_component.rememberShimmerBrush
 import com.example.salecar.presentation_layer.view_model.AppViewModel
@@ -125,6 +126,7 @@ fun HomeScreenUI(navController: NavController, viewModel: AppViewModel = hiltVie
                 }
 
                 homeScreenState.value.error != null -> {
+                    CustomApiError()
                     Toast.makeText(context, homeScreenState.value.error, Toast.LENGTH_SHORT).show()
                 }
 

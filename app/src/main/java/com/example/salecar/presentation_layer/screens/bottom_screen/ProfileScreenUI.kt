@@ -59,6 +59,7 @@ import com.example.salecar.R
 import com.example.salecar.data_layer.response.profile_res.Listings
 import com.example.salecar.presentation_layer.navigation.Routes
 import com.example.salecar.presentation_layer.screens.bottom_screen.add_screen.CustomDivider
+import com.example.salecar.presentation_layer.screens.common_component.CustomApiError
 import com.example.salecar.presentation_layer.screens.common_component.CustomLoadingBar
 import com.example.salecar.presentation_layer.screens.common_component.CustomOutlineButton
 import com.example.salecar.presentation_layer.screens.common_component.rememberShimmerBrush
@@ -96,6 +97,7 @@ fun ProfileScreenUI(
             }
 
             postListing.value.error != null -> {
+                CustomApiError()
                 Toast.makeText(context, postListing.value.error, Toast.LENGTH_SHORT).show()
             }
 
