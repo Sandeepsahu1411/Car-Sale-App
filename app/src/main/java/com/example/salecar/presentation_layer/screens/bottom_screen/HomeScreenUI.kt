@@ -215,7 +215,7 @@ fun CategoryBar(
 
 @Composable
 fun ProductCard(product: Data, onClick: (Data) -> Unit, isFavorite: Boolean = false) {
-    val baseUrl = "https://aidot.uk/sellcar/"
+    val baseUrl = "https://fivotechnology.com/sellcar/"
     val imageUrl =
         if (!product.images.isNullOrEmpty()) baseUrl + product.images.first() else R.drawable.no_image_avl
 

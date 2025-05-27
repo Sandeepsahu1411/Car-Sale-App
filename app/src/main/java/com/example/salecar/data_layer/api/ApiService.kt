@@ -1,5 +1,6 @@
 package com.example.salecar.data_layer.api
 
+import com.example.salecar.data_layer.response.car_delete_res.CarPostDeteleResponse
 import com.example.salecar.data_layer.response.car_detail_res.CarDetailResponse
 import com.example.salecar.data_layer.response.car_post_res.CarPostResponse
 import com.example.salecar.data_layer.response.category_res.CarCategoryResponse
@@ -66,5 +67,10 @@ interface ApiService {
         @Query("user_id") id: String
     ): Response<PostListingResponse>
 
+    @FormUrlEncoded
+    @POST("delete_car_post.php")
+    suspend fun deleteCarPost(
+        @Field("id") id: String
+    ): Response<CarPostDeteleResponse>
 
 }

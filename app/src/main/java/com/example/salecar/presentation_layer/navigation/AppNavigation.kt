@@ -151,7 +151,7 @@ fun AppNavigation() {
                         MassageScreenUI(navController)
                     }
                     composable<Routes.WishListScreenRoute> {
-                        WishListScreenUI(navController)
+                        WishListScreenUI(navController,viewModel)
                     }
                     composable<Routes.ProfileScreenRoute> {
                         ProfileScreenUI(navController)

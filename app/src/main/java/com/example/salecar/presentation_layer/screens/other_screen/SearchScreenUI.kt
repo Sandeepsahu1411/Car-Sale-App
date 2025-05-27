@@ -44,6 +44,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.SubcomposeAsyncImage
 import com.example.salecar.R
+import com.example.salecar.data_layer.api.IMAGE_BASEURL
 import com.example.salecar.presentation_layer.navigation.Routes
 import com.example.salecar.presentation_layer.screens.common_component.CustomLoadingBar
 import com.example.salecar.presentation_layer.view_model.AppViewModel
@@ -79,7 +80,7 @@ fun SearchScreenUI(navController: NavController, viewModel: AppViewModel = hiltV
                         val baseUrl = "https://aidot.uk/sellcar/"
 
                         val imageUrl =
-                            if (!it.images.isNullOrEmpty()) baseUrl + it.images.first() else R.drawable.no_image_avl
+                            if (!it.images.isNullOrEmpty()) IMAGE_BASEURL + it.images.first() else R.drawable.no_image_avl
 
                         Row(
                             modifier = Modifier.fillMaxWidth()
@@ -200,6 +201,3 @@ fun CustomSearchBar(
 
 }
 
-enum class Filter {
-    Categories, Car, ForSale, Property, Tradespeople, HomeAndGarden, Jobs
-}

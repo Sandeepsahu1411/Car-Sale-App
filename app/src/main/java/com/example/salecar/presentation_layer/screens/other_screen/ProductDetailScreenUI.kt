@@ -1,5 +1,6 @@
 package com.example.salecar.presentation_layer.screens.other_screen
 
+import android.content.Intent
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -9,8 +10,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,8 +28,10 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
@@ -35,6 +40,8 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -62,11 +69,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.SubcomposeAsyncImage
 import com.example.salecar.R
+import com.example.salecar.data_layer.api.IMAGE_BASEURL
 import com.example.salecar.data_layer.response.car_detail_res.CarData
 import com.example.salecar.data_layer.response.home_res.Data
 import com.example.salecar.presentation_layer.navigation.Routes
@@ -74,6 +83,7 @@ import com.example.salecar.presentation_layer.screens.bottom_screen.ProductCard
 import com.example.salecar.presentation_layer.screens.common_component.CustomButton
 import com.example.salecar.presentation_layer.screens.common_component.CustomLoadingBar
 import com.example.salecar.presentation_layer.screens.common_component.CustomTextField
+import com.example.salecar.presentation_layer.screens.common_component.rememberShimmerBrush
 import com.example.salecar.presentation_layer.view_model.AppViewModel
 import kotlinx.coroutines.launch
 
@@ -92,9 +102,8 @@ fun ProductDetailScreenUI(navController: NavController, id: String?, viewModel: 
 
     LaunchedEffect(Unit) {
         viewModel.carDetail(id.toString())
-        Log.d("TAG", "ProductDetailScreenUI: $id")
-    }
 
+    }
 
     Scaffold(
 
@@ -106,7 +115,7 @@ fun ProductDetailScreenUI(navController: NavController, id: String?, viewModel: 
         ) {
             when {
                 carDetailState.value.loading -> {
-                    CustomLoadingBar()
+                    ShimmerProductDetailScreen(innerPadding)
                 }
 
                 carDetailState.value.error != null -> {
@@ -130,36 +139,37 @@ fun ProductDetailScreenUI(navController: NavController, id: String?, viewModel: 
 
                 }
             }
-            AnimatedTopBar(navController, scrollBehavior)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-//                        .background(MaterialTheme.colorScheme.primaryContainer)
-                    .align(Alignment.BottomCenter)
-                    .padding(10.dp),
-                contentAlignment = Alignment.BottomCenter
-
-            ) {
-                Row(
+            AnimatedTopBar(navController, scrollBehavior, data)
+            if (carDetailState.value.data != null)
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 5.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+//                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .align(Alignment.BottomCenter)
+                        .padding(10.dp),
+                    contentAlignment = Alignment.BottomCenter
 
                 ) {
-                    CustomTextField(
-                        value = message,
-                        onValueChange = { message = it },
-                        modifier = Modifier.weight(0.7f),
-                        placeholderText = "Is this still available? "
-                    )
-                    CustomButton(
-                        onClick = {}, text = "Send", modifier = Modifier.weight(0.3f)
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
 
+                    ) {
+                        CustomTextField(
+                            value = message,
+                            onValueChange = { message = it },
+                            modifier = Modifier.weight(0.7f),
+                            placeholderText = "Is this still available? "
+                        )
+                        CustomButton(
+                            onClick = {}, text = "Send", modifier = Modifier.weight(0.3f)
+                        )
+
+                    }
                 }
-            }
         }
     }
 
@@ -167,8 +177,13 @@ fun ProductDetailScreenUI(navController: NavController, id: String?, viewModel: 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AnimatedTopBar(navController: NavController, scrollBehavior: TopAppBarScrollBehavior) {
+fun AnimatedTopBar(
+    navController: NavController,
+    scrollBehavior: TopAppBarScrollBehavior,
+    data: CarData?
+) {
 
+    val context = LocalContext.current
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = Color.Transparent,
@@ -198,7 +213,15 @@ fun AnimatedTopBar(navController: NavController, scrollBehavior: TopAppBarScroll
                     .background(MaterialTheme.colorScheme.primaryContainer)
             ) {
 
-                IconButton(onClick = { }) {
+                IconButton(onClick = {
+                    val sendIntent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_TEXT, "Check out this car: ${data?.title}")
+                        type = "text/plain"
+                    }
+                    val shareIntent = Intent.createChooser(sendIntent, "Share Via")
+                    context.startActivity(shareIntent)
+                }) {
                     Icon(
                         Icons.Default.Share,
                         contentDescription = "Back",
@@ -230,12 +253,12 @@ fun AnimatedTopBar(navController: NavController, scrollBehavior: TopAppBarScroll
 @Composable
 fun ProductDetail(data: CarData?, navController: NavController, product: List<Data>) {
 
-    val baseUrl = "https://aidot.uk/sellcar/"
+
     var isFavorite by remember { mutableStateOf(false) }
 
 
     ProductImageSlider(
-        images = data?.images ?: emptyList(), baseUrl = baseUrl
+        images = data?.images ?: emptyList(), baseUrl = IMAGE_BASEURL
     )
 
     Column(
@@ -381,23 +404,19 @@ fun ProductDetail(data: CarData?, navController: NavController, product: List<Da
 
 
     }
-    Box(
-        modifier = Modifier
-            .height(630.dp)
-            .fillMaxWidth()
-    ) {
-        LazyVerticalGrid(
-            modifier = Modifier.fillMaxSize(),
-            columns = GridCells.Fixed(2),
-        ) {
 
-            items(product.take(6)) { product ->
-                ProductCard(product, onClick = {
-                    navController.navigate(Routes.ProductDetailScreenRoute(id = product.id))
-                })
-            }
+    LazyVerticalGrid(
+        modifier = Modifier.fillMaxSize(). height (630.dp),
+        columns = GridCells.Fixed(2),
+    ) {
+
+        items(product.take(6)) { product ->
+            ProductCard(product, onClick = {
+                navController.navigate(Routes.ProductDetailScreenRoute(id = product.id))
+            })
         }
     }
+
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -464,5 +483,129 @@ fun ProductImageSlider(images: List<String>, baseUrl: String) {
             }
         }
 
+    }
+}
+
+@Composable
+fun ShimmerProductDetailScreen(innerPadding: PaddingValues = PaddingValues()) {
+    val brush = rememberShimmerBrush()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(top = innerPadding.calculateTopPadding()),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .height(280.dp)
+                .fillMaxWidth()
+                .background(brush)
+        )
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            items(4) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .size(40.dp)
+                        .padding(horizontal = 5.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(brush)
+                )
+
+            }
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Column(
+            Modifier.padding(horizontal = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+
+            Box(
+                modifier = Modifier
+                    .height(30.dp)
+                    .width(150.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(brush)
+            )
+
+            Box(
+                modifier = Modifier
+                    .height(30.dp)
+                    .width(100.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(brush)
+            )
+            Box(
+                modifier = Modifier
+                    .height(30.dp)
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(brush)
+            )
+            Box(
+                modifier = Modifier
+                    .height(30.dp)
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(brush)
+            )
+            Row(
+                Modifier.padding(vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(50.dp)
+                        .clip(CircleShape)
+                        .background(brush)
+                )
+                Box(
+                    modifier = Modifier
+                        .height(40.dp)
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(brush)
+                )
+
+            }
+            Box(
+                modifier = Modifier
+                    .height(20.dp)
+                    .width(150.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(brush)
+            )
+            Box(
+                modifier = Modifier
+                    .height(20.dp)
+                    .width(150.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(brush)
+            )
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .aspectRatio(1f)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(brush)
+                )
+
+
+            }
+        }
     }
 }

@@ -4,7 +4,9 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.salecar.ResultState
+import com.example.salecar.data_layer.response.car_delete_res.CarPostDeteleResponse
 import com.example.salecar.data_layer.response.car_detail_res.CarDetailResponse
 import com.example.salecar.data_layer.response.car_post_res.CarPostRequest
 import com.example.salecar.data_layer.response.car_post_res.CarPostResponse
@@ -21,6 +23,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import retrofit2.Response
 import javax.inject.Inject
@@ -53,6 +56,9 @@ class AppViewModel @Inject constructor(
 
     private val _postListingState = MutableStateFlow(PostListingState())
     val postListingState = _postListingState.asStateFlow()
+
+    private val _deleteCarPostState = MutableStateFlow(DeleteCarPostState())
+    val deleteCarPostState = _deleteCarPostState.asStateFlow()
 
     fun login(email: String, password: String) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -107,6 +113,7 @@ class AppViewModel @Inject constructor(
             }
         }
     }
+
 
     init {
         getHomeScreen()
@@ -249,6 +256,27 @@ class AppViewModel @Inject constructor(
         }
     }
 
+    fun deleteCarPost(id: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repo.deleteCarPost(id).collect {
+                when (it) {
+                    is ResultState.Loading -> {
+                        _deleteCarPostState.value = DeleteCarPostState(loading = true)
+                    }
+                    is ResultState.Success -> {
+                        _deleteCarPostState.value = DeleteCarPostState(data = it.data)
+                        viewModelScope.launch {
+                            postListing(userPreferenceManager.userID.first().toString())
+                        }
+                    }
+                    is ResultState.Error -> {
+                        _deleteCarPostState.value = DeleteCarPostState(error = it.message)
+                    }
+                }
+            }
+        }
+    }
+
 }
 
 data class LoginState(
@@ -298,5 +326,12 @@ data class PostListingState(
     val loading: Boolean = false,
     var error: String? = null,
     var data: Response<PostListingResponse>? = null
+
+)
+
+data class DeleteCarPostState(
+    val loading: Boolean = false,
+    var error: String? = null,
+    var data: Response<CarPostDeteleResponse>? = null
 
 )

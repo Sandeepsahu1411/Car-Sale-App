@@ -12,28 +12,23 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.salecar.R
 import com.example.salecar.presentation_layer.navigation.Routes
+import com.example.salecar.presentation_layer.view_model.AppViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WishListScreenUI(navController: NavController) {
+fun WishListScreenUI(navController: NavController,viewModel: AppViewModel) {
+
+    val homeScreenState = viewModel.homeScreenState.collectAsState()
+
+    val similarProduct = homeScreenState.value.data
 
 
-//    val dummyProducts = listOf(
-//        Product(R.drawable.car1, "Hyundai Creta", "₹5,00,000"),
-//        Product(R.drawable.car2, "Swift Dzire", "₹7,20,000"),
-//        Product(R.drawable.car3, "Grand i10", "₹3,50,000"),
-//        Product(R.drawable.car4, "Alto K10 9001B", "₹6,75,000"),
-//        Product(R.drawable.car5, "Mahindra Scorpio", "₹4,90,000"),
-//        Product(R.drawable.car6, "Maruti Suzuki Baleno", "₹8,40,000"),
-//        Product(R.drawable.car7, "Toyota Fortuner Black", "₹2,80,000"),
-//        Product(R.drawable.car8, "Mahindra Thar Black", "₹5,50,000"),
-//        Product(R.drawable.car9, "Tata Safari", "₹7,90,000"),
-//        Product(R.drawable.car10, "Tata Ace", "₹9,30,000"),
-//        )
 
     Scaffold(
         topBar = {
@@ -45,18 +40,18 @@ fun WishListScreenUI(navController: NavController) {
             )
         }
     ) { innerPadding ->
-//        LazyVerticalGrid(
-//            modifier = Modifier
-//                .fillMaxSize()
-//                .padding(top = innerPadding.calculateTopPadding()),
-//            columns = GridCells.Fixed(2),
-//        ) {
-//            items(dummyProducts.take(6)) { product ->
-//                ProductCard(product, onClick = {
-//                    navController.currentBackStackEntry?.savedStateHandle?.set("product", it)
-//                    navController.navigate(Routes.ProductDetailScreenRoute)
-//                }, isFavorite = true)
-//            }
-//        }
+        LazyVerticalGrid(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = innerPadding.calculateTopPadding()),
+            columns = GridCells.Fixed(2),
+        ) {
+            items(similarProduct.take(6)) { product ->
+                ProductCard(product, onClick = {
+                    navController.navigate(Routes.ProductDetailScreenRoute(id = product.id))
+
+                }, isFavorite = true)
+            }
+        }
     }
 }

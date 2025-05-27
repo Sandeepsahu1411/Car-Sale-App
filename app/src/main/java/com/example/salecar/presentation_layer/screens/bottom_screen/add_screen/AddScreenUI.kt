@@ -839,6 +839,7 @@ fun ContactDetailSec(
                 value = email,
                 onValueChange = { onEmailChange(it) },
                 placeholderText = "Enter Email",
+                isEditable = false
             )
             Text(text = "Phone Number :", fontWeight = FontWeight.Bold)
             CustomTextField(
