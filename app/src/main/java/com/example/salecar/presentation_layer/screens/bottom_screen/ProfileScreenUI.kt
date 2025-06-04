@@ -1,5 +1,6 @@
 package com.example.salecar.presentation_layer.screens.bottom_screen
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -35,6 +36,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,6 +56,7 @@ import coil.compose.SubcomposeAsyncImage
 import com.example.salecar.R
 import com.example.salecar.data_layer.api.IMAGE_BASEURL
 import com.example.salecar.data_layer.response.profile_res.Listings
+import com.example.salecar.preference_db.UserPreferenceManager
 import com.example.salecar.presentation_layer.navigation.Routes
 import com.example.salecar.presentation_layer.screens.bottom_screen.add_screen.CustomDivider
 import com.example.salecar.presentation_layer.screens.common_component.CustomApiError
@@ -66,15 +69,22 @@ import com.example.salecar.presentation_layer.view_model.AppViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreenUI(
-    navController: NavController, viewModel: AppViewModel = hiltViewModel()
+    navController: NavController,
+    viewModel: AppViewModel,
+    userPreferenceManager: UserPreferenceManager
 ) {
 
+    val userIdState = userPreferenceManager.userID.collectAsState(initial = null)
     val context = LocalContext.current
     val postListing = viewModel.postListingState.collectAsState()
     val carPostDeleteState = viewModel.deleteCarPostState.collectAsState()
     var showExitDialog by remember { mutableStateOf(false) }
     var postIdToDelete by remember { mutableStateOf<String?>(null) }
 
+    LaunchedEffect(Unit) {
+        viewModel.getUserById(userIdState.value.toString())
+        viewModel.postListing(userIdState.value.toString())
+    }
     CustomDialog(
         showDialog = showExitDialog,
         onDismiss = { showExitDialog = false },
@@ -129,8 +139,15 @@ fun ProfileScreenUI(
             }
 
             postListing.value.error != null -> {
-                CustomApiError()
-                Toast.makeText(context, postListing.value.error, Toast.LENGTH_SHORT).show()
+                CustomApiError(
+
+                    onRetry = {
+                        viewModel.postListing(userIdState.value.toString())
+                        viewModel.getUserById(userIdState.value.toString())
+                    }
+                )
+
+
             }
 
             postListing.value.data != null -> {
@@ -154,7 +171,7 @@ fun ProfileScreenUI(
                     items(postListing.value.data?.body()?.listings ?: emptyList()) {
                         MyPostingCard(
                             data = it, navController, viewModel, onDelete = {
-                                postIdToDelete =  it.id.toString()
+                                postIdToDelete = it.id.toString()
                                 showExitDialog = true
 
                             }
@@ -264,7 +281,9 @@ fun MyPostingCard(
                         )
                         Text(text = "$${data.price}")
                     }
-                    IconButton(onClick = {}) {
+                    IconButton(onClick = {
+                        navController.navigate(Routes.AddScreenRoute(id =data.id.toString() ))
+                    }) {
                         Icon(
                             imageVector = Icons.Default.Edit,
                             contentDescription = null,

@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
@@ -16,7 +17,9 @@ import androidx.compose.ui.zIndex
 import com.example.salecar.R
 
 @Composable
-fun CustomApiError() {
+fun CustomApiError(
+    onRetry: () -> Unit = {}
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -28,6 +31,11 @@ fun CustomApiError() {
             painter = painterResource(id = R.drawable.server_erorr),
             contentDescription = null,
             Modifier.size(400.dp)
+        )
+        CustomButton(
+            text = "Retry",
+            onClick = { onRetry() },
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 50.dp)
         )
     }
 

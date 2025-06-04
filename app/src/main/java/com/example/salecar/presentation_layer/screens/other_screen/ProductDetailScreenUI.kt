@@ -111,6 +111,7 @@ fun ProductDetailScreenUI(navController: NavController, id: String?, viewModel: 
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(bottom = innerPadding.calculateBottomPadding())
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
         ) {
             when {

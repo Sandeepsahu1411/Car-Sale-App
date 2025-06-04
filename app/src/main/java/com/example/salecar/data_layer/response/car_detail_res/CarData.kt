@@ -38,5 +38,6 @@ data class CarData(
     val video_link: String,
     val visibility: String,
     val website_link: Any,
-    val year: String
+    val year: String,
+    val pincode : String
 )

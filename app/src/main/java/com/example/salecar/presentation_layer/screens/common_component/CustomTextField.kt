@@ -50,7 +50,7 @@ fun CustomTextField(
     onlyNumbers: Boolean = false,
     maxLines: Int = 1,
     prefix: @Composable (() -> Unit)? = null,
-    singleLine: Boolean = true
+    singleLine: Boolean = true,
 
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -73,10 +73,10 @@ fun CustomTextField(
         prefix = prefix,
         modifier = modifier
             .fillMaxWidth()
-            .height(55.dp),
+            .height(50.dp),
         maxLines = maxLines,
         readOnly = !isEditable,
-        textStyle = TextStyle(fontSize = 18.sp),
+        textStyle = TextStyle(fontSize = 16.sp),
         visualTransformation = if (isPassword && !passwordVisibility) PasswordVisualTransformation() else VisualTransformation.None,
         trailingIcon = trailingIcon ?: if (isPassword) {
             {

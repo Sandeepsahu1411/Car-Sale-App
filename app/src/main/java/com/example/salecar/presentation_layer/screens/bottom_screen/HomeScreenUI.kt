@@ -1,13 +1,9 @@
 package com.example.salecar.presentation_layer.screens.bottom_screen
 
-import android.os.Parcelable
 import android.widget.Toast
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -39,6 +34,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -58,7 +55,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -68,16 +64,18 @@ import androidx.navigation.NavController
 import coil.compose.SubcomposeAsyncImage
 import com.example.salecar.R
 import com.example.salecar.data_layer.response.home_res.Data
-import com.example.salecar.data_layer.response.home_res.HomeScreenResponse
 import com.example.salecar.presentation_layer.navigation.Routes
 import com.example.salecar.presentation_layer.screens.common_component.CustomApiError
 import com.example.salecar.presentation_layer.screens.common_component.CustomLoadingBar
 import com.example.salecar.presentation_layer.screens.common_component.rememberShimmerBrush
 import com.example.salecar.presentation_layer.view_model.AppViewModel
-import kotlinx.parcelize.Parcelize
 
 @Composable
-fun HomeScreenUI(navController: NavController, viewModel: AppViewModel = hiltViewModel()) {
+fun HomeScreenUI(
+    navController: NavController,
+    viewModel: AppViewModel = hiltViewModel(),
+    snackbarHostState: SnackbarHostState = SnackbarHostState()
+) {
     val categories = listOf(
         "All", "Categories", "Car", "ForSale", "Property", "Tradespeople", "HomeAndGarden", "Jobs"
     )
@@ -103,8 +101,10 @@ fun HomeScreenUI(navController: NavController, viewModel: AppViewModel = hiltVie
     )
 
 
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -126,8 +126,13 @@ fun HomeScreenUI(navController: NavController, viewModel: AppViewModel = hiltVie
                 }
 
                 homeScreenState.value.error != null -> {
-                    CustomApiError()
-                    Toast.makeText(context, homeScreenState.value.error, Toast.LENGTH_SHORT).show()
+                    CustomApiError(
+                        onRetry = {
+                            viewModel.getHomeScreen()
+
+                        }
+                    )
+
                 }
 
                 else -> {
@@ -253,7 +258,7 @@ fun ProductCard(product: Data, onClick: (Data) -> Unit, isFavorite: Boolean = fa
                     .size(30.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primaryContainer)
-                    .shadow(elevation = 10.dp)
+
                     .clickable {
                         isFavorite = !isFavorite
                     },

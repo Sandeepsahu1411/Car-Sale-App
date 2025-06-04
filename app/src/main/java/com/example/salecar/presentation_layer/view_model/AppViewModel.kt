@@ -18,20 +18,32 @@ import com.example.salecar.data_layer.response.profile_res.PostListingResponse
 import com.example.salecar.data_layer.response.signup_res.SignUpResponse
 import com.example.salecar.data_layer.response.user_res.GetUserByIdResponse
 import com.example.salecar.doman_layer.Repo
+import com.example.salecar.internet_check.AndroidConnectivityObserver
 import com.example.salecar.preference_db.UserPreferenceManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.SharingStarted.Companion.WhileSubscribed
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import retrofit2.Response
 import javax.inject.Inject
 
 @HiltViewModel
 class AppViewModel @Inject constructor(
-    private val repo: Repo, private val userPreferenceManager: UserPreferenceManager
+    private val repo: Repo, private val userPreferenceManager: UserPreferenceManager,
+    private val connectivityObserver: AndroidConnectivityObserver
 ) : ViewModel() {
+    val isConnected =
+        connectivityObserver.isConnected.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000L),
+            false
+        )
 
     private val _loginState = MutableStateFlow(LoginState())
     val loginState = _loginState.asStateFlow()
@@ -59,6 +71,7 @@ class AppViewModel @Inject constructor(
 
     private val _deleteCarPostState = MutableStateFlow(DeleteCarPostState())
     val deleteCarPostState = _deleteCarPostState.asStateFlow()
+
 
     fun login(email: String, password: String) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -122,10 +135,12 @@ class AppViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferenceManager.userID.collect {
                 if (it != null) {
+
                     getUserById(it)
                     postListing(it)
                 }
             }
+
         }
     }
 
@@ -263,12 +278,14 @@ class AppViewModel @Inject constructor(
                     is ResultState.Loading -> {
                         _deleteCarPostState.value = DeleteCarPostState(loading = true)
                     }
+
                     is ResultState.Success -> {
                         _deleteCarPostState.value = DeleteCarPostState(data = it.data)
                         viewModelScope.launch {
                             postListing(userPreferenceManager.userID.first().toString())
                         }
                     }
+
                     is ResultState.Error -> {
                         _deleteCarPostState.value = DeleteCarPostState(error = it.message)
                     }

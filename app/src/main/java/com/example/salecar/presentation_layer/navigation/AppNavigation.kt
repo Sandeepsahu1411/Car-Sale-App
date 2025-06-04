@@ -1,13 +1,21 @@
 package com.example.salecar.presentation_layer.navigation
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.with
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
@@ -19,18 +27,26 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -52,69 +68,91 @@ import com.example.salecar.presentation_layer.screens.start_screen.SignUpScreenU
 import com.example.salecar.presentation_layer.screens.start_screen.SplashScreenUI
 import com.example.salecar.presentation_layer.screens.start_screen.StartScreenUI
 import com.example.salecar.presentation_layer.view_model.AppViewModel
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AppNavigation() {
-    val navController = rememberNavController()
 
+    val navController = rememberNavController()
     val userPreferenceManager = UserPreferenceManager(LocalContext.current)
     val viewModel: AppViewModel = hiltViewModel()
-    var selectedItemIndex by remember { mutableIntStateOf(0) }
+    val networkStatus = viewModel.isConnected.collectAsState()
 
-    var bottomBarVisible by remember { mutableStateOf(false) }
-    val currentBackStackEntry by navController.currentBackStackEntryAsState()
-    LaunchedEffect(currentBackStackEntry?.destination?.route) {
-        val currentRoute = currentBackStackEntry?.destination?.route
-        bottomBarVisible = currentRoute !in listOf(
-            Routes.SplashScreenRoute::class.qualifiedName,
-            Routes.StartScreenRoute::class.qualifiedName,
-            Routes.LoginScreeRoute::class.qualifiedName,
-            Routes.SignUpScreenRoute::class.qualifiedName,
-            Routes.NotificationScreenRoute::class.qualifiedName,
-            Routes.AddScreenRoute::class.qualifiedName,
-            Routes.SearchScreenRoute::class.qualifiedName,
-            Routes.ProductDetailScreenRoute::class.qualifiedName,
-            Routes.SettingScreenRoute::class.qualifiedName,
-        )
+
+
+    val bottomBarRoutes = listOf(
+        Routes.HomeScreenRoute::class.qualifiedName,
+        Routes.WishListScreenRoute::class.qualifiedName,
+        Routes.MassageScreenRoute::class.qualifiedName,
+        Routes.ProfileScreenRoute::class.qualifiedName,
+    )
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    val bottomBarVisible = remember(currentRoute) {
+        mutableStateOf(currentRoute in bottomBarRoutes)
+    }
+    var selectedItemIndex by remember(currentRoute) {
+        mutableIntStateOf(bottomBarRoutes.indexOf(currentRoute).takeIf { it >= 0 } ?: 0)
     }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         modifier = Modifier.fillMaxSize(),
         floatingActionButton = {
-            AnimatedVisibility(
-                visible = bottomBarVisible,
-                enter = fadeIn(animationSpec = tween(durationMillis = 200)) + slideInVertically { it },
-                exit = fadeOut(animationSpec = tween(durationMillis = 500)) + slideOutVertically { it }) {
+            if (bottomBarVisible.value) {
                 FloatingActionButton(
-                    onClick = { navController.navigate(Routes.AddScreenRoute) },
+                    onClick = { navController.navigate(Routes.AddScreenRoute(id = null)) },
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     shape = CircleShape,
                     modifier = Modifier.offset(y = 50.dp),
                     elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation(3.dp)
                 ) {
-                    Icon(imageVector = Icons.Default.Add, "Fab")
+                    Icon(imageVector = Icons.Default.Add, contentDescription = "Add")
                 }
             }
         },
+
         floatingActionButtonPosition = FabPosition.Center,
         bottomBar = {
-            AnimatedVisibility(
-                visible = bottomBarVisible,
-                enter = fadeIn(animationSpec = tween(durationMillis = 200)) + slideInVertically { it },
-                exit = fadeOut(animationSpec = tween(durationMillis = 1000)) + slideOutVertically { it }) {
-                CustomBottomBar(selectedItemIndex = selectedItemIndex, onItemSelected = { index ->
-                    selectedItemIndex = index
-                    val route = when (index) {
-                        0 -> Routes.HomeScreenRoute
-                        1 -> Routes.WishListScreenRoute
-                        2 -> Routes.MassageScreenRoute
-                        3 -> Routes.ProfileScreenRoute
-                        else -> Routes.HomeScreenRoute
+            AnimatedContent(
+                targetState = bottomBarVisible,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(200, easing = FastOutSlowInEasing)) with
+                            fadeOut(animationSpec = tween(300, easing = FastOutSlowInEasing))
+                },
+                label = "BottomBarTransition"
+            ) { visible ->
+                if (visible.value) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .navigationBarsPadding()
+                    ) {
+                        CustomBottomBar(
+                            selectedItemIndex = selectedItemIndex,
+                            onItemSelected = { index ->
+                                selectedItemIndex = index
+                                val route = when (index) {
+                                    0 -> Routes.HomeScreenRoute
+                                    1 -> Routes.WishListScreenRoute
+                                    2 -> Routes.MassageScreenRoute
+                                    3 -> Routes.ProfileScreenRoute
+                                    else -> Routes.HomeScreenRoute
+                                }
+                                navController.navigate(route) {
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        inclusive = true
+                                    }
+                                    launchSingleTop = true
+                                }
+                            }
+                        )
+                        if (!networkStatus.value) {
+                            ConnectionBanner()
+                        }
                     }
-                    navController.navigate(route) {
-                        popUpTo(route) { inclusive = true }
-                    }
-                })
+                }
             }
         }
     ) { innerPadding ->
@@ -122,7 +160,7 @@ fun AppNavigation() {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = if (bottomBarVisible) innerPadding.calculateBottomPadding() else 0.dp),
+                .padding(bottom = if (bottomBarVisible.value) innerPadding.calculateBottomPadding() else 0.dp),
             contentAlignment = Alignment.BottomCenter
         ) {
             NavHost(
@@ -151,16 +189,17 @@ fun AppNavigation() {
                         MassageScreenUI(navController)
                     }
                     composable<Routes.WishListScreenRoute> {
-                        WishListScreenUI(navController,viewModel)
+                        WishListScreenUI(navController, viewModel)
                     }
                     composable<Routes.ProfileScreenRoute> {
-                        ProfileScreenUI(navController)
+                        ProfileScreenUI(navController,viewModel,userPreferenceManager)
                     }
                     composable<Routes.NotificationScreenRoute> {
                         NotificationScreenUI(navController)
                     }
                     composable<Routes.AddScreenRoute> {
-                        AddScreenUI(navController)
+                        val id = it.arguments?.getString("id")
+                        AddScreenUI(navController,id)
                     }
                     composable<Routes.SearchScreenRoute> {
                         SearchScreenUI(navController)
@@ -176,6 +215,23 @@ fun AppNavigation() {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun ConnectionBanner() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.Black)
+            .padding(vertical = 4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "No connection",
+            color = Color.White,
+            style = MaterialTheme.typography.bodySmall
+        )
     }
 }
 

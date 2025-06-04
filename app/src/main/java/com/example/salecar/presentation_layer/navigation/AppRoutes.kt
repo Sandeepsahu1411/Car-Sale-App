@@ -38,7 +38,10 @@ sealed class Routes {
     object NotificationScreenRoute : Routes()
 
     @Serializable
-    object AddScreenRoute : Routes()
+    data class AddScreenRoute(
+        val id: String? = null
+    ) : Routes()
+//    object AddScreenRoute : Routes()
 
     @Serializable
     object StartScreenRoute : Routes()
@@ -48,7 +51,7 @@ sealed class Routes {
 
     @Serializable
     data class ProductDetailScreenRoute(
-        val id : String
+        val id: String
     ) : Routes()
 
     @Serializable

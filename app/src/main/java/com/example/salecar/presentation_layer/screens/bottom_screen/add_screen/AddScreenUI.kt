@@ -25,8 +25,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -79,21 +81,32 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.salecar.R
+import com.example.salecar.data_layer.api.IMAGE_BASEURL
 import com.example.salecar.data_layer.response.car_post_res.CarPostRequest
 import com.example.salecar.data_layer.response.category_res.Children
+import com.example.salecar.data_layer.response.category_res.Data
 import com.example.salecar.presentation_layer.navigation.Routes
 import com.example.salecar.presentation_layer.screens.common_component.CustomButton
 import com.example.salecar.presentation_layer.screens.common_component.CustomLoadingBar
 import com.example.salecar.presentation_layer.screens.common_component.CustomTextField
 import com.example.salecar.presentation_layer.view_model.AppViewModel
 import com.google.android.gms.maps.model.LatLng
+import androidx.core.net.toUri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddScreenUI(navController: NavController, viewModel: AppViewModel = hiltViewModel()) {
+fun AddScreenUI(
+    navController: NavController,
+    carId: String?,
+    viewModel: AppViewModel = hiltViewModel()
+) {
+
+
     val postState = viewModel.carPostState.collectAsState()
     val getUserState = viewModel.getUserByIdState.collectAsState()
     val data = getUserState.value.data?.body()?.data
+    val carDetailState = viewModel.carDetailState.collectAsState()
+    val carData = carDetailState.value.data?.body()?.data
 
 
     val showDialog = remember { mutableStateOf(true) }
@@ -112,12 +125,68 @@ fun AddScreenUI(navController: NavController, viewModel: AppViewModel = hiltView
     var phoneNumber by remember { mutableStateOf("") }
     val categoryState = viewModel.carCategoryState.collectAsState()
     val selectedCategory = remember { mutableStateOf<String?>(null) }
+    val selectedParentCategory = remember { mutableStateOf<Data?>(null) }
+    val selectedSubCategory = remember { mutableStateOf<Children?>(null) }
+    val vehicleSpec = remember { mutableStateOf(VehicleSpecFields()) }
+
 
     LaunchedEffect(getUserState.value.data) {
         getUserState.value.data?.body()?.data?.let {
             email = it.email
         }
     }
+    LaunchedEffect(carId != null) {
+        carId?.let {
+            viewModel.carDetail(it)
+        }
+    }
+
+    val isInitialized = remember { mutableStateOf(false) }
+
+    LaunchedEffect(carData) {
+        if (carId != null && !isInitialized.value) {
+            carData?.let { car ->
+                val allCategories = categoryState.value.data?.body()?.data ?: emptyList()
+                allCategories.forEach { parent ->
+                    parent.children.find { it.id.toString() == car.category_id }?.let { sub ->
+                        selectedParentCategory.value = parent
+                        selectedSubCategory.value = sub
+                        selectedCategory.value = sub.name.toString()
+                    }
+                }
+                sellerType.value = car.visibility
+                title = car.title
+                description = car.description
+                price = car.price
+                plateNo = car.plate_no
+                email = car.email
+                phoneNumber = car.contact_no
+                imageUris.addAll(car.images.map { (IMAGE_BASEURL + it).toUri() })
+                addressText.value = car.address
+                pinCode = car.pincode
+                // Location lat/lng optional
+                // selectedLocation.value = LatLng(car.latitude?.toDoubleOrNull() ?: 0.0, car.longitude?.toDoubleOrNull() ?: 0.0)
+                isInitialized.value = true
+                vehicleSpec.value = VehicleSpecFields(
+                    body_type = car.body_type,
+                    transmission = car.transmission,
+                    seats = car.seats,
+                    doors = car.doors,
+                    luggage_capacity = car.luggage_capacity,
+                    fuel_type = car.fuel_type,
+                    engine_power = car.engine_power,
+                    engine_size = car.engine_size,
+                    top_speed = car.top_speed,
+                    acceleration = car.acceleration,
+                    fuel_consumption = car.fuel_consumption,
+                    fuel_capacity = car.fuel_capacity,
+                    insurance_group = car.insurance_group
+                )
+            }
+        }
+    }
+
+
     when {
         categoryState.value.loading && getUserState.value.loading -> {
             CustomLoadingBar()
@@ -197,8 +266,10 @@ fun AddScreenUI(navController: NavController, viewModel: AppViewModel = hiltView
             item {
                 categoryState.value.data?.body()?.data?.let { categoryData ->
                     CategoryDropdownMenu(
-                        categoryData = categoryData,
-                        selectedCategory = selectedCategory
+                        categoryData = categoryState.value.data?.body()?.data ?: emptyList(),
+                        selectedCategory = selectedCategory,
+                        selectedParentCategory = selectedParentCategory,
+                        selectedSubCategory = selectedSubCategory
                     )
                 }
             }
@@ -233,7 +304,7 @@ fun AddScreenUI(navController: NavController, viewModel: AppViewModel = hiltView
                     AddPhotosSec(imageUris)
                 }
                 item {
-                    VehicleSpecificationSec(plateNo, onValueChange = { plateNo = it })
+                    VehicleSpecificationSec(plateNo, onValueChange = { plateNo = it }, vehicleSpec)
                 }
                 item {
                     AddCarDetails(
@@ -258,15 +329,7 @@ fun AddScreenUI(navController: NavController, viewModel: AppViewModel = hiltView
                 item {
                     CustomButton(
                         onClick = {
-                            if (title.isBlank() || description.isBlank() || plateNo.isBlank() || price.isBlank() || selectedLocation.value == null || imageUris.isEmpty()) {
-                                Toast.makeText(
-                                    context,
-                                    "Please fill all the fields",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                                return@CustomButton
-                            }
-                            viewModel.carPost(
+                            val carPost =
                                 CarPostRequest(
                                     category_id = selectedCategory.value ?: "0",
                                     title = title,
@@ -282,33 +345,49 @@ fun AddScreenUI(navController: NavController, viewModel: AppViewModel = hiltView
                                     latitude = selectedLocation.value?.latitude.toString(),
                                     longitude = selectedLocation.value?.longitude.toString(),
                                     year = "",
-                                    body_type = "",
-                                    transmission = "",
-                                    colour = "",
-                                    seats = "",
-                                    doors = "",
-                                    luggage_capacity = "",
-                                    fuel_type = "",
-                                    engine_power = "",
-                                    engine_size = "",
-                                    top_speed = "",
-                                    acceleration = "",
-                                    fuel_consumption = "",
-                                    fuel_capacity = "",
-                                    insurance_group = "",
+                                    body_type = vehicleSpec.value.body_type,
+                                    transmission = vehicleSpec.value.transmission,
+                                    colour = vehicleSpec.value.transmission,
+                                    seats = vehicleSpec.value.seats,
+                                    doors = vehicleSpec.value.doors,
+                                    luggage_capacity = vehicleSpec.value.luggage_capacity,
+                                    fuel_type = vehicleSpec.value.fuel_type,
+                                    engine_power = vehicleSpec.value.engine_power,
+                                    engine_size = vehicleSpec.value.engine_size,
+                                    top_speed = vehicleSpec.value.top_speed,
+                                    acceleration = vehicleSpec.value.acceleration,
+                                    fuel_consumption = vehicleSpec.value.fuel_consumption,
+                                    fuel_capacity = vehicleSpec.value.fuel_capacity,
+                                    insurance_group = vehicleSpec.value.insurance_group,
                                     images = imageUris.map { it.toString() },
                                     contact_no = phoneNumber,
                                     pincode = pinCode,
                                     brochure_engine_size = "",
-                                    user_id = data?.id.toString(),
+                                    user_id = data?.id.toString()
+                                )
 
-                                    ),
-                                context
-                            )
+                            if (title.isBlank() || description.isBlank() || plateNo.isBlank() || price.isBlank() || selectedLocation.value == null || imageUris.isEmpty()) {
+                                Toast.makeText(
+                                    context,
+                                    "Please fill all the fields",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                return@CustomButton
+                            }
+                            if (carId == null) {
+                                viewModel.carPost(
+                                    carPost,
+                                    context
+                                )
+                            } else {
+                                Toast.makeText(context, "Updating", Toast.LENGTH_SHORT).show()
+
+                            }
                         }, text = "Post", modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 10.dp)
                     )
+                    Spacer(Modifier.height(10.dp))
                 }
             }
         }
@@ -476,151 +555,6 @@ fun AddPhotosSec(imageUris: MutableList<Uri>) {
     CustomDivider()
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun VehicleSpecificationSec(plateNo: String, onValueChange: (String) -> Unit) {
-
-    val bottomSheetState = rememberModalBottomSheetState()
-    var showBottomSheet by remember { mutableStateOf(false) }
-    val selectedFeatures = remember { mutableStateListOf<String>() }
-    val featureList = listOf(
-        "AUX/USB Input Socket",
-        "Adjustable Steering Wheel",
-        "Air Conditioning",
-        "Airbag Knee Driver",
-        "Alarm System/Remote Anti-Theft",
-        "Alloy Wheels",
-        "Android Auto",
-        "Anti-lock Braking",
-        "Apple Car Play",
-        "Automatic Air Con/Climate Control",
-        "Automatic Headlights with Dusk Sensor",
-        "Automatic Stop/Start",
-        "Bluetooth Connectivity"
-    )
-
-    Column(
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Text(
-            text = "Vehicle Specification", fontSize = 18.sp, fontWeight = FontWeight.Bold
-        )
-        Column {
-            Text(
-                text = "Enter the licence plate number",
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold
-            )
-            Spacer(modifier = Modifier.size(5.dp))
-            CustomTextField(
-                value = plateNo,
-                onValueChange = { onValueChange(it.uppercase()) },
-                placeholderText = "Enter REG",
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(id = R.drawable.car_number_plate),
-                        contentDescription = null,
-                        modifier = Modifier.size(30.dp)
-                    )
-                })
-        }
-//        CustomButton(
-//            onClick = { }, text = "Look up details", enabled = plateNo.isNotBlank()
-//        )
-//        Spacer(modifier = Modifier.size(5.dp))
-        Text(
-            text = "Vehicle standard features", fontSize = 18.sp, fontWeight = FontWeight.Bold
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(55.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .border(1.dp, Color.LightGray, RoundedCornerShape(10.dp))
-//                .background(Color.LightGray.copy(alpha = 0.3f))
-                .clickable {
-                    showBottomSheet = true
-                }
-                .padding(horizontal = 15.dp), contentAlignment = Alignment.CenterStart) {
-            Row {
-                Text(
-                    text = if (selectedFeatures.isEmpty()) "Select Features" else selectedFeatures.joinToString(
-                        ", "
-                    ),
-                    color = Color.Black,
-                    fontSize = 16.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
-                )
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = null,
-                    modifier = Modifier.size(30.dp)
-                )
-
-            }
-        }
-        Text(
-            text = "${selectedFeatures.size} features added",
-            style = MaterialTheme.typography.bodySmall,
-        )
-    }
-
-    if (showBottomSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showBottomSheet = false },
-            sheetState = bottomSheetState,
-
-
-            ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxHeight(1f)
-                    .padding(horizontal = 16.dp)
-            ) {
-                Text(
-                    text = "Vehicle Features", fontSize = 20.sp, fontWeight = FontWeight.Bold
-                )
-                LazyColumn(
-                    modifier = Modifier.weight(1f)
-                ) {
-                    items(featureList) { feature ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp)
-                                .clickable {
-                                    if (selectedFeatures.contains(feature)) {
-                                        selectedFeatures.remove(feature)
-                                    } else {
-                                        selectedFeatures.add(feature)
-                                    }
-                                }, verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Checkbox(
-                                checked = selectedFeatures.contains(feature), onCheckedChange = {
-                                    if (selectedFeatures.contains(feature)) {
-                                        selectedFeatures.remove(feature)
-                                    } else {
-                                        selectedFeatures.add(feature)
-                                    }
-                                })
-                            Text(text = feature, fontSize = 16.sp)
-                        }
-                    }
-                }
-
-                CustomButton(
-                    onClick = { showBottomSheet = false }, text = "Done"
-                )
-
-            }
-        }
-    }
-}
 
 @Composable
 fun AddCarDetails(
@@ -792,7 +726,10 @@ fun ContactDetailSec(
                                 append(if (email != "") email else "User@gmail.com")
 
                             }
-                        }, style = MaterialTheme.typography.bodyLarge, color = Color.Gray
+                        },
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.Gray,
+                        fontSize = 14.sp
 
 
                     )
@@ -953,6 +890,9 @@ fun LocationDetail(
 
 
 }
+
+
+
 
 
 

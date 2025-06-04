@@ -109,8 +109,7 @@ fun CustomBottomBar(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-//            .navigationBarsPadding()
-            .then(if (!isGestureNavigation) Modifier.navigationBarsPadding() else Modifier)
+//            .then(if (!isGestureNavigation) Modifier.navigationBarsPadding() else Modifier)
             .height(64.dp)
             .clip(RoundedCornerShape(10.dp)),
         shape = cutoutShape,
