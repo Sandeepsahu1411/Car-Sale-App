@@ -94,7 +94,7 @@ fun AppNavigation() {
         mutableStateOf(currentRoute in bottomBarRoutes)
     }
     var selectedItemIndex by remember(currentRoute) {
-        mutableIntStateOf(bottomBarRoutes.indexOf(currentRoute).takeIf { it >= 0 } ?: 0)
+        mutableIntStateOf(bottomBarRoutes.indexOf(currentRoute).takeIf   { it >= 0 } ?: 0)
     }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,

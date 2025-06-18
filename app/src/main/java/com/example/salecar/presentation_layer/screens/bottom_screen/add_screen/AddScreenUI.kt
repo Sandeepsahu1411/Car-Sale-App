@@ -107,6 +107,7 @@ fun AddScreenUI(
     val data = getUserState.value.data?.body()?.data
     val carDetailState = viewModel.carDetailState.collectAsState()
     val carData = carDetailState.value.data?.body()?.data
+    val carEditState = viewModel.carEditState.collectAsState()
 
 
     val showDialog = remember { mutableStateOf(true) }
@@ -151,7 +152,7 @@ fun AddScreenUI(
                     parent.children.find { it.id.toString() == car.category_id }?.let { sub ->
                         selectedParentCategory.value = parent
                         selectedSubCategory.value = sub
-                        selectedCategory.value = sub.name.toString()
+                        selectedCategory.value = sub.id.toString()
                     }
                 }
                 sellerType.value = car.visibility
@@ -165,7 +166,10 @@ fun AddScreenUI(
                 addressText.value = car.address
                 pinCode = car.pincode
                 // Location lat/lng optional
-                // selectedLocation.value = LatLng(car.latitude?.toDoubleOrNull() ?: 0.0, car.longitude?.toDoubleOrNull() ?: 0.0)
+                val lat = (car.latitude as? Number)?.toDouble() ?: 0.0
+                val lng = (car.longitude as? Number)?.toDouble() ?: 0.0
+                selectedLocation.value = LatLng(lat, lng)
+
                 isInitialized.value = true
                 vehicleSpec.value = VehicleSpecFields(
                     body_type = car.body_type,
@@ -231,6 +235,21 @@ fun AddScreenUI(
             navController.navigate(Routes.HomeScreenRoute)
         }
 
+    }
+    when {
+        carEditState.value.loading -> {
+            CustomLoadingBar()
+        }
+
+        carEditState.value.error != null -> {
+            Toast.makeText(context, carEditState.value.error, Toast.LENGTH_SHORT).show()
+        }
+
+        carEditState.value.data != null -> {
+            Toast.makeText(context, "Edit Success", Toast.LENGTH_SHORT).show()
+            carEditState.value.data = null
+            navController.navigate(Routes.ProfileScreenRoute)
+        }
     }
 
 
@@ -380,7 +399,11 @@ fun AddScreenUI(
                                     context
                                 )
                             } else {
-                                Toast.makeText(context, "Updating", Toast.LENGTH_SHORT).show()
+                                viewModel.editCarPost(
+                                    carId,
+                                    carPost,
+                                    context
+                                )
 
                             }
                         }, text = "Post", modifier = Modifier
@@ -404,6 +427,7 @@ fun AddScreenUI(
                         } else {
                             false
                         }
+
                     },
                     onDismiss = { showDialog.value = false },
                     pinCode = pinCode,

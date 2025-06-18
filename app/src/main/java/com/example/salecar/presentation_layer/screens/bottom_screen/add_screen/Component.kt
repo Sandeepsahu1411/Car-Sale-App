@@ -1,5 +1,6 @@
 package com.example.salecar.presentation_layer.screens.bottom_screen.add_screen
 
+import android.R.attr.onClick
 import android.content.Context
 import android.location.Geocoder
 import android.util.Log
@@ -169,7 +170,7 @@ fun CategoryDropdownMenu(
     var subcategoryExpanded by remember { mutableStateOf(false) }
 
     LaunchedEffect(selectedParentCategory.value) {
-        subcategories.clear()
+//        subcategories.clear()
         selectedParentCategory.value?.let {
             subcategories.addAll(it.children)
         }
@@ -188,9 +189,10 @@ fun CategoryDropdownMenu(
                 onExpandedChange = { parentExpanded = !parentExpanded }
             ) {
                 CustomTextField(
-                    value = selectedParentCategory.value?.name ?: "Category",
+                    value = selectedParentCategory.value?.name ?: "",
                     onValueChange = {},
                     isEditable = false,
+                    placeholderText = "Category",
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = parentExpanded)
                     },
@@ -227,9 +229,10 @@ fun CategoryDropdownMenu(
                     onExpandedChange = { subcategoryExpanded = !subcategoryExpanded }
                 ) {
                     CustomTextField(
-                        value = selectedSubCategory.value?.name ?: "Subcategory",
+                        value = selectedSubCategory.value?.name ?: "",
                         onValueChange = {},
                         isEditable = false,
+                        placeholderText = "Subcategory",
                         trailingIcon = {
                             ExposedDropdownMenuDefaults.TrailingIcon(expanded = subcategoryExpanded)
                         },
@@ -300,7 +303,7 @@ fun VehicleSpecificationSec(
 ) {
 
     var showBottomSheet by remember { mutableStateOf(false) }
-    val selectedFeatures = remember { mutableStateListOf<String>() }
+
 
 
     Column(
@@ -368,180 +371,85 @@ fun VehicleSpecificationSec(
             ) {
                 Text("Enter Vehicle Specifications", fontWeight = FontWeight.Bold)
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 5.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    CustomTextField(
-                        value = vehicleSpec.value.body_type,
-                        onValueChange = {
-                            vehicleSpec.value = vehicleSpec.value.copy(body_type = it)
-                        },
-                        placeholderText = "Body Type",
-                        modifier = Modifier.weight(1f)
-                    )
-                    CustomTextField(
-                        value = vehicleSpec.value.transmission,
-                        onValueChange = {
-                            vehicleSpec.value = vehicleSpec.value.copy(transmission = it)
-                        },
-                        placeholderText = "Transmission",
-                        modifier = Modifier.weight(1f)
+                TwoFieldRow(
+                    label1 = "Body Type",
+                    value1 = vehicleSpec.value.body_type,
+                    onValueChange1 = { vehicleSpec.value = vehicleSpec.value.copy(body_type = it) },
+                    label2 = "Transmission",
+                    value2 = vehicleSpec.value.transmission,
+                    onValueChange2 = { vehicleSpec.value = vehicleSpec.value.copy(transmission = it) }
+                )
+
+                TwoFieldRow(
+                    label1 = "Colour",
+                    value1 = vehicleSpec.value.colour,
+                    onValueChange1 = { vehicleSpec.value = vehicleSpec.value.copy(colour = it) },
+                    label2 = "Seats",
+                    value2 = vehicleSpec.value.seats,
+                    onValueChange2 = { vehicleSpec.value = vehicleSpec.value.copy(seats = it) },
+                    onlyNumbers2 = true
+                )
+
+                TwoFieldRow(
+                    label1 = "Doors",
+                    value1 = vehicleSpec.value.doors,
+                    onValueChange1 = { vehicleSpec.value = vehicleSpec.value.copy(doors = it) },
+                    label2 = "Luggage Capacity",
+                    value2 = vehicleSpec.value.luggage_capacity,
+                    onValueChange2 = {
+                        vehicleSpec.value = vehicleSpec.value.copy(luggage_capacity = it)
+                    },
+                    onlyNumbers2 = true
+
+
+                )
+
+                TwoFieldRow(
+                    label1 = "Fuel Type",
+                    value1 = vehicleSpec.value.fuel_type,
+                    onValueChange1 = { vehicleSpec.value = vehicleSpec.value.copy(fuel_type = it) },
+                    label2 = "Engine Power",
+                    value2 = vehicleSpec.value.engine_power,
+                    onValueChange2 = {
+                        vehicleSpec.value = vehicleSpec.value.copy(engine_power = it)
+                    },
 
                     )
 
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 5.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    CustomTextField(
-                        value = vehicleSpec.value.colour,
-                        onValueChange = { vehicleSpec.value = vehicleSpec.value.copy(colour = it) },
-                        placeholderText = "Colour",
-                        modifier = Modifier.weight(1f)
+                TwoFieldRow(
+                    label1 = "Engine Size",
+                    value1 = vehicleSpec.value.engine_size,
+                    onValueChange1 = {
+                        vehicleSpec.value = vehicleSpec.value.copy(engine_size = it)
+                    },
+                    label2 = "Top Speed",
+                    value2 = vehicleSpec.value.top_speed,
+                    onValueChange2 = { vehicleSpec.value = vehicleSpec.value.copy(top_speed = it) }
+                )
 
-                    )
-                    CustomTextField(
-                        value = vehicleSpec.value.seats,
-                        onValueChange = { vehicleSpec.value = vehicleSpec.value.copy(seats = it) },
-                        placeholderText = "Seats",
-                        modifier = Modifier.weight(1f),
-                        onlyNumbers = true
-
-                    )
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 5.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    CustomTextField(
-                        value = vehicleSpec.value.doors,
-                        onValueChange = { vehicleSpec.value = vehicleSpec.value.copy(doors = it) },
-                        placeholderText = "Doors",
-                        modifier = Modifier.weight(1f),
-                        onlyNumbers = true
+                TwoFieldRow(
+                    label1 = "Acceleration",
+                    value1 = vehicleSpec.value.acceleration,
+                    onValueChange1 = {
+                        vehicleSpec.value = vehicleSpec.value.copy(acceleration = it)
+                    },
+                    label2 = "Fuel Consumption",
+                    value2 = vehicleSpec.value.fuel_consumption,
+                    onValueChange2 = {
+                        vehicleSpec.value = vehicleSpec.value.copy(fuel_consumption = it)
+                    }
+                )
 
 
-                    )
-                    CustomTextField(
-                        value = vehicleSpec.value.luggage_capacity,
-                        onValueChange = {
-                            vehicleSpec.value = vehicleSpec.value.copy(luggage_capacity = it)
-                        },
-                        placeholderText = "Luggage Capacity",
-                        modifier = Modifier.weight(1f)
+                TwoFieldRow(
+                    label1 = "Fuel Capacity",
+                    value1 = vehicleSpec.value.fuel_capacity,
+                    onValueChange1 = { vehicleSpec.value = vehicleSpec.value.copy(fuel_capacity = it) },
+                    label2 = "Insurance Group",
+                    value2 = vehicleSpec.value.insurance_group,
+                    onValueChange2 = { vehicleSpec.value = vehicleSpec.value.copy(insurance_group = it) }
+                )
 
-                    )
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 5.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    CustomTextField(
-                        value = vehicleSpec.value.fuel_type,
-                        onValueChange = {
-                            vehicleSpec.value = vehicleSpec.value.copy(fuel_type = it)
-                        },
-                        placeholderText = "Fuel Type",
-                        modifier = Modifier.weight(1f)
-
-                    )
-                    CustomTextField(
-                        value = vehicleSpec.value.engine_power,
-                        onValueChange = {
-                            vehicleSpec.value = vehicleSpec.value.copy(engine_power = it)
-                        },
-                        placeholderText = "Engine Power",
-                        modifier = Modifier.weight(1f)
-
-                    )
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 5.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    CustomTextField(
-                        value = vehicleSpec.value.engine_size,
-                        onValueChange = {
-                            vehicleSpec.value = vehicleSpec.value.copy(engine_size = it)
-                        },
-                        placeholderText = "Engine Size",
-                        modifier = Modifier.weight(1f)
-
-                    )
-                    CustomTextField(
-                        value = vehicleSpec.value.top_speed,
-                        onValueChange = {
-                            vehicleSpec.value = vehicleSpec.value.copy(top_speed = it)
-                        },
-                        placeholderText = "Top Speed",
-                        modifier = Modifier.weight(1f)
-
-                    )
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 5.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    CustomTextField(
-                        value = vehicleSpec.value.acceleration,
-                        onValueChange = {
-                            vehicleSpec.value = vehicleSpec.value.copy(acceleration = it)
-                        },
-                        placeholderText = "Acceleration",
-                        modifier = Modifier.weight(1f)
-
-                    )
-                    CustomTextField(
-                        value = vehicleSpec.value.fuel_consumption,
-                        onValueChange = {
-                            vehicleSpec.value = vehicleSpec.value.copy(fuel_consumption = it)
-                        },
-                        placeholderText = "Fuel Consumption",
-                        modifier = Modifier.weight(1f)
-
-                    )
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 5.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    CustomTextField(
-                        value = vehicleSpec.value.fuel_capacity,
-                        onValueChange = {
-                            vehicleSpec.value = vehicleSpec.value.copy(fuel_capacity = it)
-                        },
-                        placeholderText = "Fuel Capacity",
-                        modifier = Modifier.weight(1f)
-
-                    )
-                    CustomTextField(
-                        value = vehicleSpec.value.insurance_group,
-                        onValueChange = {
-                            vehicleSpec.value = vehicleSpec.value.copy(insurance_group = it)
-                        },
-                        placeholderText = "Insurance Group",
-                        modifier = Modifier.weight(1f)
-
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
                 CustomButton(onClick = {
                     showBottomSheet = false
                 }, text = "Done")
@@ -549,3 +457,58 @@ fun VehicleSpecificationSec(
         }
     }
 }
+
+@Composable
+fun LabeledTextField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    onlyNumbers: Boolean = false
+) {
+    Column(modifier = modifier) {
+        Text(text = label, style = MaterialTheme.typography.labelMedium)
+        Spacer(modifier = Modifier.height(2.dp))
+        CustomTextField(
+            value = value,
+            onValueChange = onValueChange,
+            placeholderText = label,
+            modifier = Modifier.fillMaxWidth(),
+            onlyNumbers = onlyNumbers
+        )
+    }
+}
+@Composable
+fun TwoFieldRow(
+    label1: String,
+    value1: String,
+    onValueChange1: (String) -> Unit,
+    label2: String,
+    value2: String,
+    onValueChange2: (String) -> Unit,
+    onlyNumbers1: Boolean = false,
+    onlyNumbers2: Boolean = false
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 5.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        LabeledTextField(
+            label = label1,
+            value = value1,
+            onValueChange = onValueChange1,
+            onlyNumbers = onlyNumbers1,
+            modifier = Modifier.weight(1f)
+        )
+        LabeledTextField(
+            label = label2,
+            value = value2,
+            onValueChange = onValueChange2,
+            onlyNumbers = onlyNumbers2,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+

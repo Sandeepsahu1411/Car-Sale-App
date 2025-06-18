@@ -2,11 +2,11 @@ package com.example.salecar.doman_layer
 
 import android.content.Context
 import android.util.Log
-import android.util.Log.e
 import com.example.salecar.ResultState
 import com.example.salecar.data_layer.api.ApiProvider
 import com.example.salecar.data_layer.response.car_delete_res.CarPostDeteleResponse
 import com.example.salecar.data_layer.response.car_detail_res.CarDetailResponse
+import com.example.salecar.data_layer.response.car_edit_res.CarEditResponse
 import com.example.salecar.data_layer.response.car_post_res.CarPostRequest
 import com.example.salecar.data_layer.response.car_post_res.CarPostResponse
 import com.example.salecar.data_layer.response.car_post_res.toMultipart
@@ -128,6 +128,19 @@ class Repo {
                 emit(ResultState.Error(e.message.toString()))
             }
         }
+
+    suspend fun editCarPost(
+        id: String, request: CarPostRequest, context: Context
+    ): Flow<ResultState<Response<CarEditResponse>>> = flow {
+        emit(ResultState.Loading)
+        try {
+            val (data, imageParts) = request.toMultipart(context = context)
+            val response = ApiProvider.api().editCarPost(id, data, imageParts)
+            emit(ResultState.Success(response))
+        } catch (e: Exception) {
+            emit(ResultState.Error(e.message.toString()))
+        }
+    }
 
 
 }

@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.salecar.ResultState
 import com.example.salecar.data_layer.response.car_delete_res.CarPostDeteleResponse
 import com.example.salecar.data_layer.response.car_detail_res.CarDetailResponse
+import com.example.salecar.data_layer.response.car_edit_res.CarEditResponse
 import com.example.salecar.data_layer.response.car_post_res.CarPostRequest
 import com.example.salecar.data_layer.response.car_post_res.CarPostResponse
 import com.example.salecar.data_layer.response.category_res.CarCategoryResponse
@@ -71,6 +72,9 @@ class AppViewModel @Inject constructor(
 
     private val _deleteCarPostState = MutableStateFlow(DeleteCarPostState())
     val deleteCarPostState = _deleteCarPostState.asStateFlow()
+
+    private val _carEditState = MutableStateFlow(CarEditState())
+    val carEditState = _carEditState.asStateFlow()
 
 
     fun login(email: String, password: String) {
@@ -294,6 +298,26 @@ class AppViewModel @Inject constructor(
         }
     }
 
+    fun editCarPost(id: String, request: CarPostRequest, context: Context) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repo.editCarPost(id, request, context).collect {
+                when (it) {
+                    is ResultState.Loading -> {
+                        _carEditState.value = CarEditState(loading = true)
+                    }
+
+                    is ResultState.Success -> {
+                        _carEditState.value = CarEditState(data = it.data)
+                    }
+
+                    is ResultState.Error -> {
+                        _carEditState.value = CarEditState(error = it.message)
+                    }
+                }
+            }
+        }
+    }
+
 }
 
 data class LoginState(
@@ -351,4 +375,10 @@ data class DeleteCarPostState(
     var error: String? = null,
     var data: Response<CarPostDeteleResponse>? = null
 
+)
+
+data class CarEditState(
+    val loading: Boolean = false,
+    val error: String? = null,
+    var data: Response<CarEditResponse>? = null
 )

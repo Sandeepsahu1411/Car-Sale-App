@@ -2,6 +2,7 @@ package com.example.salecar.data_layer.api
 
 import com.example.salecar.data_layer.response.car_delete_res.CarPostDeteleResponse
 import com.example.salecar.data_layer.response.car_detail_res.CarDetailResponse
+import com.example.salecar.data_layer.response.car_edit_res.CarEditResponse
 import com.example.salecar.data_layer.response.car_post_res.CarPostResponse
 import com.example.salecar.data_layer.response.category_res.CarCategoryResponse
 import com.example.salecar.data_layer.response.home_res.HomeScreenResponse
@@ -72,5 +73,15 @@ interface ApiService {
     suspend fun deleteCarPost(
         @Field("id") id: String
     ): Response<CarPostDeteleResponse>
+
+
+    @Multipart
+    @POST("edit_car_post.php")
+    suspend fun editCarPost(
+        @Query("id") id: String,
+        @PartMap data: Map<String, @JvmSuppressWildcards RequestBody>,
+        @Part images: List<MultipartBody.Part>
+    ): Response<CarEditResponse>
+
 
 }
